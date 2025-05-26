@@ -1,0 +1,42 @@
+#+title: Notitzen
+
+* Das "BAL"-Format
+
+Willi speichert seine Stundenpläne in Dateien mit der Endung ~.BAL~. Das Format scheint für den Internen gebrauch und nicht dokumentiert zu sein.
+
+BAL-Dateien sind grundsätzlich CSV-dateien. Sie beginnen jedoch mit folgender Kopfzeile:
+
+#+begin_example
+---------- WILLI2-Stundenplan ---------- Version: 430 ----------
+#+end_example
+
+Spaltenbezeichnungen fehlen komplett. Nach der Kopfzeile besteht das Dokument nur noch aus CSV-Zeilen — jedoch nicht mit einheitlicher Länge; es handelt sich also um mehrere unabhängige Tabellen. Diese erste Spalte scheint der Unterscheidung zu dienen. Sie besteht aus einer Abfolge von bis zu drei Buchstaben, manchmal gefolgt von Ziffern, die einen Primärschlüssel darzustellen scheinen. Es erscheinen in den vorgelegten Dateien folgende solche "typen" (in Reihenfolge):
+
+- [ ] ~W~ — Nur eine Zeile, scheint die Schule zu identifizieren
+- [ ] ~WP~ — Zweck unbekannt
+- [ ] ~T{x}~ — Tage des Stundenplans
+- [ ] ~S{x}~ — Stunden des Plans
+- [ ] ~MP~ — Zweck unbekannt; scheint der Zahl der Stunden zu entsprechen
+- [ ] ~L{x}~ — Lehrer
+- [ ] ~LB{x}~ — Zweck unbekannt
+
+  Diese Tabelle ordnet einigen Lehrerkürzeln jeweils eine unterschiedlich Lange, musterlose Kette von Kleinbuchstaben zu. Interessanterweise ist der Index ~{x}~ nicht unbedingt Aufeinanderfolgend, sondern entspricht dem jeweiligen Index des Lehrers in ~L{x}~.
+
+- [ ] ~R{x}~ — Räume
+- [ ] ~G{x}~ — Zweck unbekannt
+- [ ] ~F{x}~ — Fächer
+- [ ] ~K{x}~ — Klassen
+- [ ] ~X{x}~ — Zweck unbekannt; möglicherweise Sonderereignisse
+- [ ] ~O{x}~ — Zweck unbekannt; möglicherweise Gebiete für Pausenaufsicht
+- [ ] ~Z{x}~ — Zweck unbekannt
+- [ ] ~A{x}~ — Zweck unbekannt; scheinbar Zugeordnet zu ~O{x}~. Möglicherweise zuordnungen der Pausenaufsicht?
+- [ ] ~AV{x}~ — Zweck unbekannt; enthält nur Nullen.
+- [ ] ~J{x}~ — Zweck unbekannt; Jede Zeile enthält ein Fach, eine Leerspalte und die Zahl ~"12632256"~
+- [ ] ~U{x}~ — Zuordnung der Unterrichtsstunden
+- [ ] ~PL[S]~ — Zweck unbekannt
+
+  Die Typspalte dieser Tabelle enthält keinen Index, dafür aber manchmal den Buchstaben ~S~ nach ~PL~. Zeilen beginnend mit ~PL~ und ~PLS~ sind vermischt.
+- [ ] ~PKS~ — Zweck unbekannt
+- [ ] ~PRS~ — Zweck unbekannt
+
+Markierte Elemente sind Tabellentypen, deren Verarbeitung bereits in der Bibliothek umgesetzt ist.

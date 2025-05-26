@@ -1,0 +1,41 @@
+@font-face {
+    font-family: "Inter";
+    src: url("/InterVariable.woff2") format("woff2 supports variations"),
+         url("/InterVariable.woff2") format("woff2-variations");
+    font-weight: 100 900;
+}
+
+:root {
+    --page-bg: #161616;
+
+    --text-important: #ffffff;
+    --text: #c8c8c8;
+
+    --level-1: #262626;
+
+    --border: #484848;
+}
+
+html, body, #main {
+    background: var(--page-bg);
+
+    width: 100vw;
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-flow: column;
+
+    color: var(--text);
+}
+
+* {
+    font-family: "Inter", sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-important);
+}

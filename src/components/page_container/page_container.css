@@ -1,0 +1,8 @@
+.page-container {
+    width: 750px;
+    margin: 0 auto;
+    padding-top: 100px;
+
+    display: flex;
+    flex-flow: column;
+}
