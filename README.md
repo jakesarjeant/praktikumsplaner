@@ -21,5 +21,5 @@ Diese Software liest Stundenpläne des Stundenplanprogramms [WILLI2](https://wil
 ---
 
 <p align="center">
-  <sup>Copyright © 2025 — Jake Sarjeant. Verfügbar unter der [MIT-Lizenz](/LICENSE)</sup>
+  <sup>Copyright © 2025 — Jake Sarjeant. Verfügbar unter der <a href="https://github.com/jakesarjeant/praktikumsplaner/blob/master/LICENSE">MIT-Lizenz</a></sup>
 </p>
