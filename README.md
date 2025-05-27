@@ -16,7 +16,7 @@
 
 ---
 
-Diese Software liest Stundenpläne des Stundenplanprogramms [WILLI2](https://willi.wgg-neumarkt.de/) und kombiniert berechnet daraus optimale Stundenpläne für Lehramtspraktikanten.
+Diese Software liest Stundenpläne des Stundenplanprogramms [WILLI2](https://willi.wgg-neumarkt.de/) und berechnet daraus optimale Stundenpläne für Lehramtspraktikanten.
 
 ---
 
