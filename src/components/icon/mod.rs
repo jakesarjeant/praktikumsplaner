@@ -34,3 +34,4 @@ macro_rules! include_icon {
 // HACK: You should set the color in your icon SVG to `currentColor` so that the CSS text color is
 // respected.
 include_icon!(ARROW_RIGHT, "/assets/phosphor-icons/arrow-right.svg");
+include_icon!(FILE_TEXT, "/assets/phosphor-icons/file-text.svg");

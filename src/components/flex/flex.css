@@ -4,6 +4,8 @@
     align-items: flex-start;
     justify-content: flex-start;
 
+    position: relative;
+
     max-width: fit-content;
 
     gap: var(--space-3);
@@ -14,6 +16,8 @@
     flex-flow: column;
     align-items: flex-start;
     justify-content: flex-start;
+
+    position: relative;
 
     max-width: fit-content;
 

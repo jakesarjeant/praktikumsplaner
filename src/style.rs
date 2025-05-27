@@ -31,11 +31,10 @@ macro_rules! style {
   ($path:literal) => {{
     use std::sync::Once;
     static STYLE_ONCE: Once = Once::new();
-    STYLE_ONCE.call_once(||
-    {
-    crate::style::CSS_SOURCES
-      .write()
-      .insert(crate::style::HashAsset(asset!($path), $path));
+    STYLE_ONCE.call_once(|| {
+      crate::style::CSS_SOURCES
+        .write()
+        .insert(crate::style::HashAsset(asset!($path), $path));
     })
   }};
 }
