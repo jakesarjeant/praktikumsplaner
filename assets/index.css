@@ -13,9 +13,15 @@
 
     --level-1: #262626;
 
+    --primary: #3155d6;
+    --on-primary: #ffffff;
+
     --border: #484848;
+    --border-primary: #718ced;
+
     --border-width: 1px;
-    --radius-md: 4px;
+    --radius-sm: 4px;
+    --radius-md: 8px;
 
     --space-1: 4px;
     --space-2: 8px;

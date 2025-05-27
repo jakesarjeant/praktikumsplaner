@@ -1,20 +1,34 @@
 use dioxus::prelude::*;
 
-use crate::components::card::Card;
+use crate::components::{button::Button, card::Card, icon::ARROW_RIGHT};
 
 #[component]
 pub fn ScheduleForm() -> Element {
   rsx! {
     Card {
       title: rsx!{ Fragment { "Stundenplan Auswählen" } },
-      note: rsx! { p { "hi" } },
+      buttons: rsx! {
+        Button {
+          disabled: true,
+          icon_after: ARROW_RIGHT,
+          "Weiter"
+        }
+      },
 
       p {
-        "Öffnen sie einen WILLI-Stundenplan oder wählen sie einen bereits importierten aus dem drop-down-menü aus."
+        "Öffnen sie einen WILLI-Stundenplan oder wählen sie einen bereits importierten aus dem
+        drop-down-menü aus."
       }
-
       p {
-        "Klicken sie auf das Feld, um eine Datei auszusuchen, oder ziehen sie die Datei auf diesen Kasten."
+        "Klicken sie auf das Feld, um eine Datei auszusuchen, oder ziehen sie die Datei auf diesen
+        Kasten."
+      }
+      p {
+        b {
+          "Wichtig: "
+        }
+        "Es wird eine komplette Stundenplandatei erwartert. Es ist kein manueller Export von Daten
+        nötig; ein solcher wird auch nicht akzeptiert."
       }
     }
   }
