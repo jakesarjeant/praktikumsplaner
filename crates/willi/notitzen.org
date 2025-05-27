@@ -1,5 +1,7 @@
 #+title: Notitzen
 
+> Bemerkung: ~.org~-Dateien werden von GitHub manchmal nicht korrekt angezeigt.
+
 * Das "BAL"-Format
 
 Willi speichert seine Stundenpläne in Dateien mit der Endung ~.BAL~. Das Format scheint für den Internen gebrauch und nicht dokumentiert zu sein.
