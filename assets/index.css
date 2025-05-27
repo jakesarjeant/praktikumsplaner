@@ -14,6 +14,13 @@
     --level-1: #262626;
 
     --border: #484848;
+    --border-width: 1px;
+    --radius-md: 4px;
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 16px;
+    --space-4: 32px;
 }
 
 html, body, #main {

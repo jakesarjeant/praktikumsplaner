@@ -5,6 +5,8 @@ use crate::style;
 #[derive(PartialEq, Clone, Props)]
 pub struct CardProps {
   title: Option<Element>,
+  note: Option<Element>,
+  buttons: Option<Element>,
   children: Element
 }
 
@@ -25,7 +27,25 @@ pub fn Card(props: CardProps) -> Element {
 
       div {
         class: "card",
-        {props.children}
+
+        div {
+          class: "card-content",
+          {props.children}
+        }
+
+        if props.buttons.is_some() || props.note.is_some() {
+          div {
+            class: "card-actions",
+            div {
+              class: "card-note",
+              {props.note}
+            }
+            div {
+              class: "card-buttons",
+              {props.buttons}
+            }
+          }
+        }
       }
     }
   }
