@@ -1,9 +1,22 @@
 use dioxus::prelude::*;
 
-use crate::components::{button::Button, card::Card, file_input::FileInput, icon::{ARROW_RIGHT, FILE_TEXT}, input_row::InputRow};
+use crate::{
+  components::{
+    button::Button,
+    card::Card,
+    file_input::FileInput,
+    icon::{ARROW_RIGHT, FILE_TEXT},
+    input_row::InputRow,
+  },
+  hooks::file_upload::use_file_upload,
+};
 
 #[component]
 pub fn ScheduleForm() -> Element {
+  let on_upload = use_callback(|_| Ok(()));
+
+  let willi2_file = use_file_upload(|| None, on_upload);
+
   rsx! {
     Card {
       title: rsx!{ Fragment { "Stundenplan Auswählen" } },
@@ -35,7 +48,7 @@ pub fn ScheduleForm() -> Element {
         },
         // TODO: Only allow files with correct ending
         FileInput {
-          handle_upload: move |_| { Err(()) }
+          target: willi2_file
         }
       }
     }

@@ -5,6 +5,7 @@ mod style;
 mod components;
 mod pages;
 mod blocks;
+mod hooks;
 
 fn main() {
   dioxus::launch(App);
