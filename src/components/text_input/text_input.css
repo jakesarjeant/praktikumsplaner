@@ -1,4 +1,4 @@
-.file-input-wrapper {
+.text-input-wrapper {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -27,17 +27,16 @@
     transition: 300ms box-shadow;
 }
 
-.file-input-wrapper:hover {
+.text-input-wrapper:hover {
     border-color: var(--border-hover);
     cursor: pointer;
 }
 
-.file-input-wrapper.fi-error {
+.text-input-wrapper.ti-error {
     border-color: var(--error);
 }
 
-.file-input-wrapper .fi-icon-box,
-.file-input-wrapper .fi-spinner {
+.text-input-wrapper .ti-icon-box {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -45,49 +44,21 @@
     height: 24px;
 }
 
-.fi-success {
-    color: var(--success);
+.text-input-wrapper input {
+    width: 100%;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    border: none;
+    font-size: 1rem;
+    color: var(--text);
 }
 
-.fi-error {
-    color: var(--error);
-}
-
-.file-input-wrapper .fi-spinner {
-    animation: 1s linear infinite spin;
-}
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-.file-input-wrapper .fi-file-name {
-    flex-grow: 1;
-}
-
-.file-input-wrapper .fi-progress-bar {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-
-    height: 3px;
-
-    background: var(--primary);
-}
-
-.file-input-wrapper .fi-input {
-    width: 0;
-    overflow: hidden;
-    opacity: 0;
-    position: absolute;
-}
-
-.file-input-wrapper:has(input:focus-visible) {
+.text-input-wrapper:has(input:focus-visible) {
     box-shadow: var(--shadow-selected);
     border-color: var(--border-primary);
+}
+
+.text-input-wrapper input:focus-visible {
+    outline: none;
 }

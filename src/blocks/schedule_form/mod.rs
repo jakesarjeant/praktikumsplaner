@@ -37,7 +37,7 @@ pub fn ScheduleForm() -> Element {
         Kasten."
       }
       InputRow {
-        label: "WILLI2-Datei",
+        label: ".BAL-Datei",
         icon: FILE_TEXT,
         description: rsx! {
           b {

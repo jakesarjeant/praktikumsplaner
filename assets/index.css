@@ -22,6 +22,7 @@
     --border: #484848;
     --border-hover: #888888;
     --border-primary: #718ced;
+    --border-primary-outline: #718ced50;
 
     --border-width: 1px;
     --radius-sm: 4px;
@@ -33,6 +34,8 @@
     --space-4: 32px;
 
     --shadow-1: 0px 4px 16px #00000033;
+    --shadow-deselected: 0px 0px 0px 0px var(--border-primary-outline);
+    --shadow-selected: 0px 0px 0px 2px var(--border-primary-outline);
 
     --input-min-width: 200px;
     --input-max-width: 400px;
