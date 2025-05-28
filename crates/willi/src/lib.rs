@@ -131,5 +131,5 @@ pub struct WilliDay {
   // TODO: Figure out exactly what the periods string means and find a better representation
   periods: String,
   // TODO: Encode the breaks into the representation of periods
-  breaks: String
+  breaks: String,
 }

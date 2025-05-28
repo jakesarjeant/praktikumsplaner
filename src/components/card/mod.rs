@@ -7,7 +7,7 @@ pub struct CardProps {
   title: Option<Element>,
   note: Option<Element>,
   buttons: Option<Element>,
-  children: Element
+  children: Element,
 }
 
 #[component]

@@ -2,14 +2,17 @@ use dioxus::prelude::*;
 
 use crate::style;
 
-use super::{icon::{Icon, IconShape}, flex::Column};
+use super::{
+  flex::Column,
+  icon::{Icon, IconShape},
+};
 
 #[derive(Props, PartialEq, Clone)]
 pub struct InputRowProps {
   label: String,
   icon: Option<IconShape>,
   description: Option<Element>,
-  children: Element
+  children: Element,
 }
 
 #[component]

@@ -25,8 +25,9 @@ pub fn Icon(props: IconProps) -> Element {
 
 macro_rules! include_icon {
   ($name:tt, $path:literal) => {
-    pub const $name: IconShape = IconShape(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), $path)));
-  }
+    pub const $name: IconShape =
+      IconShape(include_str!(concat!(env!("CARGO_MANIFEST_DIR"), $path)));
+  };
 }
 
 // Include Icons

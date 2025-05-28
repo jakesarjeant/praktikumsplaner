@@ -1,11 +1,11 @@
 use dioxus::prelude::*;
 use style::AppStyles;
 
-mod style;
-mod components;
-mod pages;
 mod blocks;
+mod components;
 mod hooks;
+mod pages;
+mod style;
 
 fn main() {
   dioxus::launch(App);
@@ -13,7 +13,7 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-  rsx!{
+  rsx! {
     AppStyles {}
     document::Stylesheet { href: asset!("/assets/index.css") }
 

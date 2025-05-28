@@ -1,11 +1,6 @@
-use std::{
-  collections::{BTreeSet, HashSet},
-  hash::Hash,
-  sync::Mutex,
-};
+use std::{collections::HashSet, hash::Hash};
 
 use dioxus::prelude::*;
-use once_cell::sync::Lazy;
 
 pub struct HashAsset(pub Asset, pub &'static str);
 
@@ -23,7 +18,7 @@ impl PartialEq for HashAsset {
 
 impl Eq for HashAsset {}
 
-pub static CSS_SOURCES: GlobalSignal<HashSet<HashAsset>> = Global::new(|| HashSet::new());
+pub static CSS_SOURCES: GlobalSignal<HashSet<HashAsset>> = Global::new(HashSet::new);
 
 // TODO: Somehow make it possible to import styles by relative path
 #[macro_export]
@@ -32,9 +27,9 @@ macro_rules! style {
     use std::sync::Once;
     static STYLE_ONCE: Once = Once::new();
     STYLE_ONCE.call_once(|| {
-      crate::style::CSS_SOURCES
+      $crate::style::CSS_SOURCES
         .write()
-        .insert(crate::style::HashAsset(asset!($path), $path));
+        .insert($crate::style::HashAsset(asset!($path), $path));
     })
   }};
 }

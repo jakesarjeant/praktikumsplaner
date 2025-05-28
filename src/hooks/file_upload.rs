@@ -29,7 +29,7 @@ where
   FileUpload {
     is_valid,
     state,
-    on_change: on_change,
+    on_change,
   }
 }
 
@@ -54,7 +54,7 @@ impl FileUpload {
       FileUploadState::Failed { ref file_name } => Some(file_name.clone()),
       FileUploadState::Uploading { ref file_name } => Some(file_name.clone()),
       FileUploadState::Done(ref f) => Some(f.file_name.clone()),
-      _ => None
+      _ => None,
     }
   }
 
