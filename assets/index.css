@@ -15,8 +15,12 @@
 
     --primary: #3155d6;
     --on-primary: #ffffff;
+    --success: #27db5a;
+    --success-transparent: #27db5a10;
+    --error: #da395f;
 
     --border: #484848;
+    --border-hover: #888888;
     --border-primary: #718ced;
 
     --border-width: 1px;

@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::components::{button::Button, card::Card, icon::{ARROW_RIGHT, FILE_TEXT}, input_row::InputRow};
+use crate::components::{button::Button, card::Card, file_input::FileInput, icon::{ARROW_RIGHT, FILE_TEXT}, input_row::InputRow};
 
 #[component]
 pub fn ScheduleForm() -> Element {
@@ -33,9 +33,10 @@ pub fn ScheduleForm() -> Element {
           "Es wird eine komplette Stundenplandatei erwartert. Es ist kein manueller Export von Daten
           nötig; ein solcher wird auch nicht akzeptiert."
         },
-        Button {
-          "Datei Öffnen"
-        },
+        // TODO: Only allow files with correct ending
+        FileInput {
+          handle_upload: move |_| { Err(()) }
+        }
       }
     }
   }

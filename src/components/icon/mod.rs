@@ -17,6 +17,7 @@ pub fn Icon(props: IconProps) -> Element {
       width: props.size.unwrap_or(24),
       height: props.size.unwrap_or(24),
       view_box: "0 0 256 256",
+      preserve_aspect_ratio: "xMidYMid slice",
       dangerous_inner_html: props.icon.0
     }
   }
@@ -35,3 +36,7 @@ macro_rules! include_icon {
 // respected.
 include_icon!(ARROW_RIGHT, "/assets/phosphor-icons/arrow-right.svg");
 include_icon!(FILE_TEXT, "/assets/phosphor-icons/file-text.svg");
+include_icon!(FOLDER_DASHED, "/assets/phosphor-icons/folder-dashed.svg");
+include_icon!(SPINNER_BALL, "/assets/phosphor-icons/spinner-ball.svg");
+include_icon!(CHECK, "/assets/phosphor-icons/check.svg");
+include_icon!(X, "/assets/phosphor-icons/x.svg");
