@@ -1,7 +1,7 @@
 @font-face {
     font-family: "Inter";
-    src: url("/InterVariable.woff2") format("woff2 supports variations"),
-         url("/InterVariable.woff2") format("woff2-variations");
+    src: url("/assets/InterVariable.woff2") format("woff2 supports variations"),
+         url("/assets/InterVariable.woff2") format("woff2-variations");
     font-weight: 100 900;
 }
 
@@ -49,6 +49,9 @@ html, body, #main {
 
 * {
     font-family: "Inter", sans-serif;
+    font-smoothing: grayscale;
+    -moz-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, h4, h5, h6 {
