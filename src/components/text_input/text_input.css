@@ -29,7 +29,7 @@
 
 .text-input-wrapper:hover {
     border-color: var(--border-hover);
-    cursor: pointer;
+    cursor: text;
 }
 
 .text-input-wrapper.ti-error {
