@@ -17,6 +17,10 @@
     min-width: var(--input-min-width);
     max-width: var(--input-max-width);
 
+    color: var(--text);
+    font-size: 1rem;
+    text-align: left;
+
     flex-grow: 1;
 }
 

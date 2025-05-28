@@ -22,10 +22,10 @@ pub fn InputRow(props: InputRowProps) -> Element {
   rsx! {
     Column {
       style: "width: 100%; max-width: unset",
-      label {
+      div {
         class: "input-row",
 
-        span {
+        label {
           class: "label-column",
 
           if let Some(icon) = props.icon {

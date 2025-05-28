@@ -36,7 +36,7 @@ pub fn FileInput(props: FileInputProps) -> Element {
   };
 
   rsx! {
-    span {
+    label {
       class: "file-input-wrapper",
       class: if !props.target.is_valid() { "fi-error" },
       span {
