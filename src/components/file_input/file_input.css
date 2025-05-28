@@ -14,7 +14,8 @@
     border-radius: var(--radius-sm);
     background: var(--page-bg);
 
-    min-width: 200px;
+    min-width: var(--input-min-width);
+    max-width: var(--input-max-width);
 
     flex-grow: 1;
 }

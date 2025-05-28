@@ -33,6 +33,9 @@
     --space-4: 32px;
 
     --shadow-1: 0px 4px 16px #00000033;
+
+    --input-min-width: 200px;
+    --input-max-width: 400px;
 }
 
 html, body, #main {
