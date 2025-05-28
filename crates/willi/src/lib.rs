@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, default::Default, io::Cursor, str::FromStr};
 
-use csv::StringRecord;
+use csv::{ReaderBuilder, StringRecord};
 use thiserror::Error;
 use tracing::warn;
 
@@ -25,15 +25,20 @@ pub enum LineError {
   MissingType,
   #[error("Ungültiger Primärschlüssel")]
   BadId,
+  #[error("Ungültige Zeile mit fehlenden Einträgen")]
+  TooShort,
 }
 
+#[derive(Debug, Clone)]
 pub struct WilliDocument {
-  header: WilliHeader,
-  days: Vec<WilliDay>,
+  pub header: WilliHeader,
+  pub days: Vec<WilliDay>,
 }
 
-impl WilliDocument {
-  fn parse(source: String) -> Result<WilliDocument, DocumentError> {
+impl FromStr for WilliDocument {
+  type Err = DocumentError;
+
+  fn from_str(source: &str) -> Result<WilliDocument, Self::Err> {
     let Some((raw_header, body)) = source.split_once("\r\n") else {
       return Err(DocumentError::MissingHeader);
     };
@@ -45,7 +50,10 @@ impl WilliDocument {
     };
     let mut line_errors = vec![];
 
-    let mut csv_reader = csv::Reader::from_reader(Cursor::new(body));
+    let mut csv_reader = ReaderBuilder::new()
+      .has_headers(false)
+      .flexible(true)
+      .from_reader(Cursor::new(body));
     let mut records = csv_reader.records();
 
     while let Some(next_record) = records.next() {
@@ -57,48 +65,94 @@ impl WilliDocument {
         .ok();
     }
 
-    Ok(document)
-  }
-
-  fn parse_record(&mut self, record: &StringRecord) -> Result<(), LineError> {
-    let Some(type_col) = record.get(1) else {
-      return Err(LineError::MissingType);
-    };
-
-    let (typ, id): (&str, usize) = type_col
-      .split_once(|c: char| !c.is_alphabetic())
-      .map(|(typ, id)| Ok((typ, id.parse().map_err(|_| LineError::BadId)?)))
-      .transpose()?
-      .unwrap_or((type_col, 0));
-
-    match (typ, id) {
-      ("W", _) => todo!(),
-      ("WP", _) => todo!(),
-      ("T", x) => todo!(),
-      ("S", x) => todo!(),
-      ("MP", _) => todo!(),
-      ("L", x) => todo!(),
-      ("LB", x) => todo!(),
-      ("R", x) => todo!(),
-      ("G", x) => todo!(),
-      ("F", x) => todo!(),
-      ("K", x) => todo!(),
-      ("X", x) => todo!(),
-      ("O", x) => todo!(),
-      ("Z", x) => todo!(),
-      ("A", x) => todo!(),
-      ("AV", x) => todo!(),
-      ("J", x) => todo!(),
-      ("U", x) => todo!(),
-      ("PL", _) => todo!(),
-      ("PLS", _) => todo!(),
-      ("PKS", _) => todo!(),
-      ("PRS", _) => todo!(),
-      (typ, _) => Ok(warn!("Unbekannter Zeilentyp: {typ}")),
+    if line_errors.is_empty() {
+      Ok(document)
+    } else {
+      Err(DocumentError::BadLines(line_errors))
     }
   }
 }
 
+impl WilliDocument {
+  fn parse_record(&mut self, record: &StringRecord) -> Result<(), LineError> {
+    let Some(type_col) = record.get(0) else {
+      return Err(LineError::MissingType);
+    };
+
+    let (typ, id): (&str, usize) = type_col
+      .split_at_checked(
+        type_col
+          .find(|c: char| !c.is_alphabetic())
+          .unwrap_or(type_col.len()),
+      )
+      .map(|(typ, id)| (typ, id.parse().unwrap_or(0)))
+      .unwrap_or((type_col, 0));
+
+    match (typ, id) {
+      // ("w", _) => todo!(),
+      // ("WP", _) => todo!(),
+      ("T", x) => self.parse_T(x, record),
+      // ("S", x) => todo!(),
+      // ("MP", _) => todo!(),
+      // ("L", x) => todo!(),
+      // ("LB", x) => todo!(),
+      // ("R", x) => todo!(),
+      // ("G", x) => todo!(),
+      // ("F", x) => todo!(),
+      // ("K", x) => todo!(),
+      // ("X", x) => todo!(),
+      // ("O", x) => todo!(),
+      // ("Z", x) => todo!(),
+      // ("A", x) => todo!(),
+      // ("AV", x) => todo!(),
+      // ("J", x) => todo!(),
+      // ("U", x) => todo!(),
+      // ("PL", _) => todo!(),
+      // ("PLS", _) => todo!(),
+      // ("PKS", _) => todo!(),
+      // ("PRS", _) => todo!(),
+      (typ, _) => Ok(warn!("Unbekannter Zeilentyp '{typ}' wurde ignoriert")),
+    }
+  }
+
+  fn parse_T(&mut self, index: usize, record: &StringRecord) -> Result<(), LineError> {
+    // TODO: Figure out whether indexing is significant
+    // My guess is that the indexes are only used to make sure elements are serialized in the same order
+    if index <= self.days.len() {
+      warn!("Tage in falscher Reihenfolge");
+    }
+    if record.len() < 5 {
+      return Err(LineError::TooShort);
+    }
+
+    let periods = record[3]
+      .chars()
+      .zip(record[4].chars())
+      .take_while(|(p, b)| p != &'X')
+      .map(|(p, b)| WilliPeriod {
+        kind: match p {
+          'V' => WilliPeriodKind::V,
+          'N' => WilliPeriodKind::N,
+          'M' => WilliPeriodKind::M,
+          _ => WilliPeriodKind::Unknown,
+        },
+        break_before: b == 'P',
+      })
+      .collect();
+
+    let day = WilliDay {
+      short: record[1].to_string(),
+      long: record[2].to_string(),
+      periods,
+    };
+
+    self.days.push(day);
+
+    Ok(())
+  }
+}
+
+#[derive(Debug, Clone)]
 pub struct WilliHeader {
   version: usize,
 }
@@ -125,11 +179,29 @@ impl FromStr for WilliHeader {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct WilliDay {
-  short: String,
-  long: String,
-  // TODO: Figure out exactly what the periods string means and find a better representation
-  periods: String,
-  // TODO: Encode the breaks into the representation of periods
-  breaks: String,
+  /// Two-letter short code
+  pub short: String,
+  /// Full name of the day
+  pub long: String,
+  pub periods: Vec<WilliPeriod>,
+}
+
+#[derive(Debug, Clone)]
+pub struct WilliPeriod {
+  pub kind: WilliPeriodKind,
+  /// Whether this period is preceded by a short break
+  pub break_before: bool,
+}
+
+#[derive(Debug, Clone)]
+pub enum WilliPeriodKind {
+  /// "Vormittag"
+  V,
+  /// "Nachmittag"
+  N,
+  /// "Mittagspause"
+  M,
+  Unknown,
 }
