@@ -16,7 +16,7 @@ Spaltenbezeichnungen fehlen komplett. Nach der Kopfzeile besteht das Dokument nu
 
 - [ ] ~W~ — Nur eine Zeile, scheint die Schule zu identifizieren
 - [ ] ~WP~ — Zweck unbekannt
-- [ ] ~T{x}~ — Tage des Stundenplans
+- [ ] ~T{x}~ — Tage des Stundenplans, siehe [[T-Zeilen]]
 - [ ] ~S{x}~ — Stunden des Plans
 - [ ] ~MP~ — Zweck unbekannt; scheint der Zahl der Stunden zu entsprechen
 - [ ] ~L{x}~ — Lehrer
@@ -42,3 +42,7 @@ Spaltenbezeichnungen fehlen komplett. Nach der Kopfzeile besteht das Dokument nu
 - [ ] ~PRS~ — Zweck unbekannt
 
 Markierte Elemente sind Tabellentypen, deren Verarbeitung bereits in der Bibliothek umgesetzt ist.
+
+** T-Zeilen
+
+Die Tabelle ~T{x}~ entsprechen offensichtlich dem [[https://willi.wgg-neumarkt.de/handbuch/willi/willi.html][Stundenraster]]. Sie ordnet jedem Tag eine Kurzbezeichnung, eine Langbezeichnung und zwei weitere Zeichenketten zu, die jeweils den Stunden und Pausen des Tages entsprechen.
