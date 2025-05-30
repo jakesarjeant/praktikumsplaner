@@ -40,6 +40,7 @@ pub struct WilliDocument {
   // TODO: Is storing the timetable out-of-band really a good idea?
   pub default_timetable: Vec<WilliTimeSlot>,
   // TODO: Alternative Timetables
+  pub teachers: Vec<WilliTeacher>,
 }
 
 impl FromStr for WilliDocument {
@@ -55,6 +56,7 @@ impl FromStr for WilliDocument {
       header,
       days: Default::default(),
       default_timetable: Default::default(),
+      teachers: Default::default(),
     };
     let mut line_errors = vec![];
 
@@ -102,7 +104,7 @@ impl WilliDocument {
       ("T", x) => self.parse_T(x, record),
       ("S", x) => self.parse_S(x, record),
       // ("MP", _) => todo!(),
-      // ("L", x) => todo!(),
+      ("L", x) => self.parse_L(x, record),
       // ("LB", x) => todo!(),
       // ("R", x) => todo!(),
       // ("G", x) => todo!(),
@@ -192,6 +194,36 @@ impl WilliDocument {
 
     Ok(())
   }
+
+  fn parse_L(&mut self, index: usize, record: &StringRecord) -> Result<(), LineError> {
+    if index <= self.default_timetable.len() {
+      warn!("Lehrer in falscher Reihenfolge");
+    }
+
+    if record.len() < 6 {
+      return Err(LineError::TooShort);
+    }
+
+    self.teachers.push(WilliTeacher {
+      abbreviation: record[1].to_string(),
+      short: record[2].to_string(),
+      full_name: record[3].to_string(),
+      first_name: (!record[4].is_empty()).then(|| record[4].to_string()),
+      title: (!record[5].is_empty()).then(|| record[5].to_string()),
+      function: match &record[6] {
+        "P" => Some(WilliTeacherFunction::P),
+        "D" => Some(WilliTeacherFunction::D),
+        "S" => Some(WilliTeacherFunction::S),
+        "R" => Some(WilliTeacherFunction::R),
+        f => {
+          warn!("Funktion {f} nicht erkannt");
+          None
+        }
+      },
+    });
+
+    Ok(())
+  }
 }
 
 #[derive(Debug, Clone)]
@@ -254,4 +286,36 @@ pub enum WilliPeriodKind {
 pub struct WilliTimeSlot {
   pub start: (u8, u8),
   pub end: (u8, u8),
+}
+
+#[derive(Debug, Clone)]
+pub struct WilliTeacher {
+  /// "Kürzel"
+  ///
+  /// Up to 5 chars
+  pub abbreviation: String,
+  /// "Kurzname"
+  ///
+  /// Up to 7 chars
+  pub short: String,
+  /// Up to 40 chars
+  pub full_name: String,
+  /// Up to 40 chars
+  pub first_name: Option<String>,
+  /// Anrede
+  pub title: Option<String>,
+  pub function: Option<WilliTeacherFunction>,
+  // TODO: Rest of the fields
+}
+
+#[derive(Debug, Clone)]
+pub enum WilliTeacherFunction {
+  /// Personalrat
+  P,
+  /// Direktorat
+  D,
+  /// Seminarlehrer
+  S,
+  /// Referendar
+  R,
 }
