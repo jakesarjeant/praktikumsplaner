@@ -134,6 +134,7 @@ impl WilliDocument {
           'V' => WilliPeriodKind::V,
           'N' => WilliPeriodKind::N,
           'M' => WilliPeriodKind::M,
+          'n' => WilliPeriodKind::M, // TODO: This is a guess. Verify that this is correct.
           _ => WilliPeriodKind::Unknown,
         },
         break_before: b == 'P',

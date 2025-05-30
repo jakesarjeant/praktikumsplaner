@@ -22,15 +22,14 @@ pub fn ScheduleForm() -> Element {
       title: rsx!{ Fragment { "Stundenplan Auswählen" } },
       buttons: rsx! {
         Button {
-          disabled: true,
+          disabled: !willi2_file.is_valid() || willi2_file.is_empty(),
           icon_after: ARROW_RIGHT,
           "Weiter"
         }
       },
 
       p {
-        "Öffnen sie einen WILLI-Stundenplan oder wählen sie einen bereits importierten aus dem
-        drop-down-menü aus."
+        "Öffnen sie eine WILLI2-Datei (Endung \".BAL\"), um mit der Planung loszulegen."
       }
       p {
         "Klicken sie auf das Feld, um eine Datei auszusuchen, oder ziehen sie die Datei auf diesen
