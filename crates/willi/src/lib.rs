@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-use std::{collections::HashMap, default::Default, io::Cursor, str::FromStr};
+use std::{default::Default, io::Cursor, num::ParseIntError, str::FromStr};
 
 use csv::{ReaderBuilder, StringRecord};
 use thiserror::Error;
@@ -27,12 +27,19 @@ pub enum LineError {
   BadId,
   #[error("Ungültige Zeile mit fehlenden Einträgen")]
   TooShort,
+  #[error("Ungültige Zeitangabe")]
+  BadTime,
+  #[error("Ungültige Zahl")]
+  BadNumber(#[from] ParseIntError),
 }
 
 #[derive(Debug, Clone)]
 pub struct WilliDocument {
   pub header: WilliHeader,
   pub days: Vec<WilliDay>,
+  // TODO: Is storing the timetable out-of-band really a good idea?
+  pub default_timetable: Vec<WilliTimeSlot>,
+  // TODO: Alternative Timetables
 }
 
 impl FromStr for WilliDocument {
@@ -47,6 +54,7 @@ impl FromStr for WilliDocument {
     let mut document = WilliDocument {
       header,
       days: Default::default(),
+      default_timetable: Default::default(),
     };
     let mut line_errors = vec![];
 
@@ -92,7 +100,7 @@ impl WilliDocument {
       // ("w", _) => todo!(),
       // ("WP", _) => todo!(),
       ("T", x) => self.parse_T(x, record),
-      // ("S", x) => todo!(),
+      ("S", x) => self.parse_S(x, record),
       // ("MP", _) => todo!(),
       // ("L", x) => todo!(),
       // ("LB", x) => todo!(),
@@ -152,11 +160,43 @@ impl WilliDocument {
 
     Ok(())
   }
+
+  fn parse_S(&mut self, index: usize, record: &StringRecord) -> Result<(), LineError> {
+    if index <= self.default_timetable.len() {
+      // TODO: At this point, the entire table is guaranteed to be invalid. Should we fail?
+      warn!("Stunden in falscher Reihenfolge");
+    }
+
+    // NOTE: Really, the correct record length seems to be 5, but we currently ignore the last wo,
+    // so this should be fine
+    if record.len() < 3 {
+      return Err(LineError::TooShort);
+    }
+
+    let (start, end) = record[2].split_once('-').ok_or(LineError::BadTime)?;
+
+    // TODO: Clean up
+    let start = start
+      .split_once('.')
+      .map(|(hour, min)| Ok::<_, ParseIntError>((hour.parse()?, min.parse()?)))
+      .transpose()?
+      .ok_or(LineError::BadTime)?;
+
+    let end = end
+      .split_once('.')
+      .map(|(hour, min)| Ok::<_, ParseIntError>((hour.parse()?, min.parse()?)))
+      .transpose()?
+      .ok_or(LineError::BadTime)?;
+
+    self.default_timetable.push(WilliTimeSlot { start, end });
+
+    Ok(())
+  }
 }
 
 #[derive(Debug, Clone)]
 pub struct WilliHeader {
-  version: usize,
+  pub version: usize,
 }
 
 impl FromStr for WilliHeader {
@@ -206,4 +246,12 @@ pub enum WilliPeriodKind {
   /// "Mittagspause"
   M,
   Unknown,
+}
+
+/// Represents the start and end of a period in the timetable. Times are represented as tuples of
+/// `(hour, minute)`, to avoid bringing chrono into play.
+#[derive(Debug, Clone)]
+pub struct WilliTimeSlot {
+  pub start: (u8, u8),
+  pub end: (u8, u8),
 }
