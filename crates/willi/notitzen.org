@@ -21,14 +21,13 @@ Spaltenbezeichnungen fehlen komplett. Nach der Kopfzeile besteht das Dokument nu
 
 - [ ] ~W~ — Nur eine Zeile, scheint die Schule zu identifizieren
 - [ ] ~WP~ — Zweck unbekannt
-- [ ] ~T{x}~ — Tage des Stundenplans, siehe [[T-Zeilen]]
-- [ ] ~S{x}~ — [[S-Zeilen][Stunden des Plans]]
+- [x] ~T{x}~ — Tage des Stundenplans, siehe [[T-Zeilen]]
+- [x] ~S{x}~ — [[S-Zeilen][Stunden des Plans]]
 - [ ] ~MP~ — Zweck unbekannt; scheint der Zahl der Stunden zu entsprechen
-- [ ] ~L{x}~ — Lehrer
+- [-] ~L{x}~ — Lehrer
+  Teilweise implementiert; Einige der Felder sind noch nicht bekannt
 - [ ] ~LB{x}~ — Zweck unbekannt
-
   Diese Tabelle ordnet einigen Lehrerkürzeln jeweils eine unterschiedlich Lange, musterlose Kette von Kleinbuchstaben zu. Interessanterweise ist der Index ~{x}~ nicht unbedingt Aufeinanderfolgend, sondern entspricht dem jeweiligen Index des Lehrers in ~L{x}~.
-
 - [ ] ~R{x}~ — Räume
 - [ ] ~G{x}~ — Zweck unbekannt
 - [ ] ~F{x}~ — Fächer
