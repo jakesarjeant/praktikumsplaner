@@ -52,14 +52,11 @@ Markierte Elemente sind Tabellentypen, deren Verarbeitung bereits in der Bibliot
 Die Tabelle ~T{x}~ entsprechen offensichtlich dem [[https://willi.wgg-neumarkt.de/handbuch/willi/willi.html][Stundenraster]]. Sie ordnet jedem Tag eine Kurzbezeichnung, eine Langbezeichnung und zwei weitere Zeichenketten zu, die jeweils den Stunden und Pausen des Tages entsprechen.
 
 #+begin_example
-"T1","Mo","Montag","VVVVVVnNNNNXXXXXXXXXXXXX","...P...................."
+     Kurzname,Langname,Stundenarten              ,Pausen
+"T1","Mo"    ,"Montag","VVVVVVnNNNNXXXXXXXXXXXXX","...P...................."
 #+end_example
 
-Die Stundentypen "V" (Vormittagsstunde), "N" (Nachmittagsstunde) und "M" (Mittagspause) sind im Handbuch dokumentiert. Da hier "n" für die Mittagspause steht, gehe ich vorerst davon aus, dass "n" auch als "M" aufzufassen ist.
-
-:NOTE:
-Es wird im Handbuch auch ohne weitere Erklärung die Stunde "MN" verwendet, vermutlich um Mittagspausen zu designieren, die auch manchmal Nachmittagsstunden sind. Möglicherweise ist "n" also das Symbol für "MN"-Stunden.
-:END:
+Die Stundentypen "V" (Vormittagsstunde), "N" (Nachmittagsstunde), "M" (Mittagspause) und "MN" (Mittagspause/Nachmittagsstunde) sind im Handbuch dokumentiert. Da jeder Stunde nur ein Zeichen zusteht, wird "MN" offenbar vom kleingeschriebenen "n" repräsentiert.
 
 ** S-Zeilen
 
