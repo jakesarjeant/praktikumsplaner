@@ -30,7 +30,8 @@ Spaltenbezeichnungen fehlen komplett. Nach der Kopfzeile besteht das Dokument nu
   Diese Tabelle ordnet einigen Lehrerkürzeln jeweils eine unterschiedlich Lange, musterlose Kette von Kleinbuchstaben zu. Interessanterweise ist der Index ~{x}~ nicht unbedingt Aufeinanderfolgend, sondern entspricht dem jeweiligen Index des Lehrers in ~L{x}~.
 - [ ] ~R{x}~ — Räume
 - [ ] ~G{x}~ — Zweck unbekannt
-- [ ] ~F{x}~ — Fächer
+- [-] ~F{x}~ — Fächer
+  Großteils implementiert
 - [ ] ~K{x}~ — Klassen
 - [ ] ~X{x}~ — Zweck unbekannt; möglicherweise Sonderereignisse
 - [ ] ~O{x}~ — Zweck unbekannt; möglicherweise Gebiete für Pausenaufsicht
@@ -81,4 +82,11 @@ Viele der Spalten der ~L~-Zeilen erscheinen im Programm in anderer Reihenfolge a
 #+begin_example
         Kürzel,Kurzname,Name           ,Vorname,Andrede,                                        SollWs, Fkt.,Lück?,        Block,Vert,-Früh,-Spät,HzHohl,AufsMax,BewNm,    StdMx,VerfMx,                 NachmMx,
 "L41",  "KUR" ,"KUR"   ,"Kurz Kristina",       ,       ,"4,000","0,000","0,000","0,000","0,000","4"   ,,"D" ,"3"  ,"0","0","1"  ,"0" ,"0"  ,"0"  ,"5"   ,"3"    ,"N"  ,,,,,"6"  ,"2"   ,,"0,000","0,000","3"    ,,"0,000","0,000"
+#+end_example
+
+** F-Zeilen
+
+#+begin_example
+      Kürzel,Kurname,Name    ,Doppelstd,Gruppe,Konzentrationsbedarf(0-3),Wissenschaftl?,???,???
+"F35","Ph"  ,"Ph"   ,"Physik",         ,      ,"3"                      ,"W"           ,   ,"4"
 #+end_example

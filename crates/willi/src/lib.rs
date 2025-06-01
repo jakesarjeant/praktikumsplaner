@@ -41,6 +41,7 @@ pub struct WilliDocument {
   pub default_timetable: Vec<WilliTimeSlot>,
   // TODO: Alternative Timetables
   pub teachers: Vec<WilliTeacher>,
+  pub subjects: Vec<WilliSubject>
 }
 
 impl FromStr for WilliDocument {
@@ -57,6 +58,7 @@ impl FromStr for WilliDocument {
       days: Default::default(),
       default_timetable: Default::default(),
       teachers: Default::default(),
+      subjects: Default::default()
     };
     let mut line_errors = vec![];
 
@@ -108,7 +110,7 @@ impl WilliDocument {
       // ("LB", x) => todo!(),
       // ("R", x) => todo!(),
       // ("G", x) => todo!(),
-      // ("F", x) => todo!(),
+      ("F", x) => self.parse_F(x, record),
       // ("K", x) => todo!(),
       // ("X", x) => todo!(),
       // ("O", x) => todo!(),
@@ -126,6 +128,7 @@ impl WilliDocument {
     }
   }
 
+  #[allow(non_snake_case)]
   fn parse_T(&mut self, index: usize, record: &StringRecord) -> Result<(), LineError> {
     // TODO: Figure out whether indexing is significant
     // My guess is that the indexes are only used to make sure elements are serialized in the same order
@@ -163,6 +166,7 @@ impl WilliDocument {
     Ok(())
   }
 
+  #[allow(non_snake_case)]
   fn parse_S(&mut self, index: usize, record: &StringRecord) -> Result<(), LineError> {
     if index <= self.default_timetable.len() {
       // TODO: At this point, the entire table is guaranteed to be invalid. Should we fail?
@@ -195,6 +199,7 @@ impl WilliDocument {
     Ok(())
   }
 
+  #[allow(non_snake_case)]
   fn parse_L(&mut self, index: usize, record: &StringRecord) -> Result<(), LineError> {
     if index <= self.default_timetable.len() {
       warn!("Lehrer in falscher Reihenfolge");
@@ -223,6 +228,7 @@ impl WilliDocument {
         }
       },
       // TODO: Is 0 really the correct default for all of these?
+      // TODO: Use `.get`; don't fail on missing fields
       sollwochenstunden: record[11].parse().unwrap_or(0),
       luecken: record[14].parse().unwrap_or(0),
       gew_block: record[17].parse().unwrap_or(0),
@@ -235,6 +241,34 @@ impl WilliDocument {
       max_stundenzahl: record[28].parse().unwrap_or(0),
       max_verfuegungsstd: record[29].parse().unwrap_or(0),
       max_nachmittag: record[33].parse().unwrap_or(0),
+    });
+
+    Ok(())
+  }
+
+  #[allow(non_snake_case)]
+  fn parse_F(&mut self, index: usize, record: &StringRecord) -> Result<(), LineError> {
+    if index <= self.default_timetable.len() {
+      warn!("Lehrer in falscher Reihenfolge");
+    }
+
+    if record.len() < 6 {
+      return Err(LineError::TooShort);
+    }
+
+    self.subjects.push(WilliSubject {
+      kuerzel: record[1].to_string(),
+      kurzname: record[2].to_string(),
+      name: record[3].and_then(ToString::to_string),
+      doppelstunden: &record[4] == "d",
+      gruppe: record[5].and_then(ToString::to_string),
+      konzentrationsbedarf: match &record[6] {
+        "1" => WilliDifficulty::Low,
+        "2" => WilliDifficulty::Medium,
+        "3" => WilliDifficulty::Max,
+        _ => WilliDifficulty::Min
+      },
+      wissenschaftlich: &record[7] == "W"
     });
 
     Ok(())
@@ -345,6 +379,31 @@ pub enum WilliTeacherFunction {
   S,
   /// Referendar
   R,
+}
+
+#[derive(Debug, Clone)]
+pub struct WilliSubject {
+  pub kuerzel: String,
+  pub kurzname: String,
+  pub name: Option<String>,
+  pub doppelstunden: bool,
+  // TODO: Properly link grouped subjects; Extract this field into SubjectGroups
+  pub gruppe: Option<String>,
+  pub konzentrationsbedarf: WilliDifficulty,
+  pub wissenschaftlich: bool,
+}
+
+#[derive(Debug, Clone)]
+#[repr(u8)]
+pub enum WilliDifficulty {
+  /// "0: Das Fach kann auch ausschließlich in der 5. und 6. Stunde unterrichtet werden (z. B. Sport)"
+  Min,
+  /// "1: Kein Kernfach, auf die Qualität der Stundenverteilung wird geachtet."
+  Low,
+  /// "2: Kein Kernfach, sollte aber wenigstes einmal eine 4. oder bessere Stunde erhalten."
+  Medium,
+  /// "3: Kernfach, welches auch bessere Stunden bekommen muss."
+  Max
 }
 
 trait IfNonEmptyExt {
