@@ -41,7 +41,8 @@ pub struct WilliDocument {
   pub default_timetable: Vec<WilliTimeSlot>,
   // TODO: Alternative Timetables
   pub teachers: Vec<WilliTeacher>,
-  pub subjects: Vec<WilliSubject>
+  pub subjects: Vec<WilliSubject>,
+  pub classes: Vec<WilliClass>,
 }
 
 impl FromStr for WilliDocument {
@@ -58,7 +59,8 @@ impl FromStr for WilliDocument {
       days: Default::default(),
       default_timetable: Default::default(),
       teachers: Default::default(),
-      subjects: Default::default()
+      subjects: Default::default(),
+      classes: Default::default(),
     };
     let mut line_errors = vec![];
 
@@ -111,7 +113,7 @@ impl WilliDocument {
       // ("R", x) => todo!(),
       // ("G", x) => todo!(),
       ("F", x) => self.parse_F(x, record),
-      // ("K", x) => todo!(),
+      ("K", x) => self.parse_K(x, record),
       // ("X", x) => todo!(),
       // ("O", x) => todo!(),
       // ("Z", x) => todo!(),
@@ -205,7 +207,7 @@ impl WilliDocument {
       warn!("Lehrer in falscher Reihenfolge");
     }
 
-    if record.len() < 6 {
+    if record.len() < 33 {
       return Err(LineError::TooShort);
     }
 
@@ -252,7 +254,7 @@ impl WilliDocument {
       warn!("Lehrer in falscher Reihenfolge");
     }
 
-    if record.len() < 6 {
+    if record.len() < 7 {
       return Err(LineError::TooShort);
     }
 
@@ -266,9 +268,50 @@ impl WilliDocument {
         "1" => WilliDifficulty::Low,
         "2" => WilliDifficulty::Medium,
         "3" => WilliDifficulty::Max,
-        _ => WilliDifficulty::Min
+        _ => WilliDifficulty::Min,
       },
-      wissenschaftlich: &record[7] == "W"
+      wissenschaftlich: &record[7] == "W",
+    });
+
+    Ok(())
+  }
+
+  #[allow(non_snake_case)]
+  fn parse_K(&mut self, index: usize, record: &StringRecord) -> Result<(), LineError> {
+    if index <= self.default_timetable.len() {
+      warn!("Lehrer in falscher Reihenfolge");
+    }
+
+    if record.len() < 6 {
+      return Err(LineError::TooShort);
+    }
+
+    self.classes.push(WilliClass {
+      kuerzel: record[1].to_string(),
+      kurzname: record[2].to_string(),
+      name: record[3].and_then(ToString::to_string),
+      stammraum: record[4].and_then(ToString::to_string),
+      klassenleiter: record[5].and_then(ToString::to_string),
+      zweitklassenleiter: record[6].and_then(ToString::to_string),
+      deputat: record[7].parse().unwrap_or(0),
+      schuelerzahl: record[8].parse().unwrap_or(0),
+      anzahl_weiblich: record[9].parse().unwrap_or(0),
+      stufe: record[10].parse().unwrap_or(0),
+      klassenart: match &record[11] {
+        "P" => WilliClassType::Pseudoklasse,
+        "W" => WilliClassType::Wahlkursklasse,
+        "K" => WilliClassType::Kursstufe,
+        "I" => WilliClassType::Intensivierungsklasse,
+        "+" => WilliClassType::Pluskursklasse,
+        _ => WilliClassType::Normal
+      },
+      stammklasse: record[13].and_then(ToString::to_string),
+      mittagspause: record[16].parse().unwrap_or(0),
+      max_nachmittage: record[17].parse().unwrap_or(0),
+      anzahl_kath: record[19].parse().unwrap_or(0),
+      anzahl_ev: record[20].parse().unwrap_or(0),
+      anzahl_sonst: record[21].parse().unwrap_or(0),
+      anzahl_fahrschueler: record[22].parse().unwrap_or(0),
     });
 
     Ok(())
@@ -403,7 +446,42 @@ pub enum WilliDifficulty {
   /// "2: Kein Kernfach, sollte aber wenigstes einmal eine 4. oder bessere Stunde erhalten."
   Medium,
   /// "3: Kernfach, welches auch bessere Stunden bekommen muss."
-  Max
+  Max,
+}
+
+#[derive(Debug, Clone)]
+pub struct WilliClass {
+  pub kuerzel: String,
+  pub kurzname: String,
+  pub name: Option<String>,
+  pub stammraum: Option<String>,
+  pub klassenleiter: Option<String>,
+  pub zweitklassenleiter: Option<String>,
+  pub deputat: usize,
+  pub schuelerzahl: usize,
+  pub anzahl_weiblich: usize,
+  pub stufe: usize,
+  pub klassenart: WilliClassType,
+  // NOTE: 2 unknown fields
+  pub stammklasse: Option<String>,
+  // NOTE: 1 unknown field
+  pub mittagspause: usize,
+  pub max_nachmittage: usize,
+  // NOTE: 1 unknown field
+  pub anzahl_kath: usize,
+  pub anzahl_ev: usize,
+  pub anzahl_sonst: usize,
+  pub anzahl_fahrschueler: usize,
+}
+
+#[derive(Debug, Clone)]
+pub enum WilliClassType {
+  Pseudoklasse,
+  Kursstufe,
+  Wahlkursklasse,
+  Intensivierungsklasse,
+  Pluskursklasse,
+  Normal
 }
 
 trait IfNonEmptyExt {
