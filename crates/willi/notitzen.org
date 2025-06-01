@@ -2,6 +2,11 @@
 
 > Bemerkung: ~.org~-Dateien werden von GitHub manchmal nicht korrekt angezeigt.
 
+**** Konventionen für die Benennung in der Bibliothek:
+
+Da Englisch die "lingua franca" der Softwareentwicklung ist, meide ich es normalerweise, deutsche Bezeichnungen zu nutzen. Jedoch ergibt sich hier ein Problem, da WILLI2 ein ausschließlich deutsches Programm ist, weshalb das Übersetzen der Spaltennamen ins Englische mehr Verwirrung zu verursachen scheint, als es behebt. Als Mittelweg habe ich deshalb entschieden, Spaltennamen wörtlich zu übernehmen, für die repräsentativen Datenstrukturen (e.g. ~WilliDocument~, ~WilliPeriod~, etc.) aber englische Namen einzusetzen.
+
+
 * Das "BAL"-Format
 
 Willi speichert seine Stundenpläne in Dateien mit der Endung ~.BAL~. Das Format scheint für den Internen gebrauch und nicht dokumentiert zu sein.
@@ -71,4 +76,13 @@ Interessanterweise scheint die Zeile eine dopplung zu enthalten: Die letzten bei
 "S6","6","12.15-13.00","12:30","13:15"
 #+end_example
 
-Die angaben in der kombinierten Spalte sind korrekt; die anderen beiden weichen aus mir unklaren Gründen ab. Deshalb errechnet die Bibliothek aktuell Stundenbegin- und Ende aus der Kombispalte und ignoriert die anderen beiden.
+Die angaben in der kombinierten Spalte sind korrekt; die anderen beiden weichen aus mir unklaren Gründen ab. Ein öffnen der Datei in WILLI offenbart, dass die letzten beiden Spalten tatsächlich "Beginn" und "Ende" sind, die andere eine "Langbezeichnung". Es scheint also, dass die Schule zwecks Drucken die Langbezeichnungen manuell eingegeben und aktuell gehalten hat, die anderen aber, da sie vermutlich nicht im Ausdruck erscheinen einfach nie aktualisiert. Can't have shit in detroit.
+
+** L-Zeilen
+
+Viele der Spalten der ~L~-Zeilen erscheinen im Programm in anderer Reihenfolge als in der Tabelle und andere erscheinen überhaupt nicht in der WILLI-Ansicht. Deshalb werden momentan nur einige der Felder von der Bibliothek erkannt.
+
+#+begin_example
+        Kürzel,Kurzname,Name           ,Vorname,Andrede,                                        SollWs, Fkt.,Lück?,        Block,Vert,-Früh,-Spät,HzHohl,AufsMax,BewNm,    StdMx,VerfMx,                 NachmMx,
+"L41",  "KUR" ,"KUR"   ,"Kurz Kristina",       ,       ,"4,000","0,000","0,000","0,000","0,000","4"   ,,"D" ,"3"  ,"0","0","1"  ,"0" ,"0"  ,"0"  ,"5"   ,"3"    ,"N"  ,,,,,"6"  ,"2"   ,,"0,000","0,000","3"    ,,"0,000","0,000"
+#+end_example

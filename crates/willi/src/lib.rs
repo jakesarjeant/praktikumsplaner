@@ -177,7 +177,7 @@ impl WilliDocument {
 
     let (start, end) = record[2].split_once('-').ok_or(LineError::BadTime)?;
 
-    // TODO: Clean up
+    // FIXME: Get times from actual time fields
     let start = start
       .split_once('.')
       .map(|(hour, min)| Ok::<_, ParseIntError>((hour.parse()?, min.parse()?)))
@@ -205,21 +205,36 @@ impl WilliDocument {
     }
 
     self.teachers.push(WilliTeacher {
-      abbreviation: record[1].to_string(),
-      short: record[2].to_string(),
-      full_name: record[3].to_string(),
-      first_name: (!record[4].is_empty()).then(|| record[4].to_string()),
-      title: (!record[5].is_empty()).then(|| record[5].to_string()),
-      function: match &record[6] {
+      kuerzel: record[1].to_string(),
+      kurzname: record[2].to_string(),
+      name: record[3].to_string(),
+      vorname: record[4].and_then(ToString::to_string),
+      anrede: record[5].and_then(ToString::to_string),
+      // Yes, the fields are out of order
+      funktion: match &record[13] {
         "P" => Some(WilliTeacherFunction::P),
         "D" => Some(WilliTeacherFunction::D),
         "S" => Some(WilliTeacherFunction::S),
         "R" => Some(WilliTeacherFunction::R),
+        "" => None,
         f => {
           warn!("Funktion {f} nicht erkannt");
           None
         }
       },
+      // TODO: Is 0 really the correct default for all of these?
+      sollwochenstunden: record[11].parse().unwrap_or(0),
+      luecken: record[14].parse().unwrap_or(0),
+      gew_block: record[17].parse().unwrap_or(0),
+      gew_verteilung: record[18].parse().unwrap_or(0),
+      gew_frueh: record[19].parse().unwrap_or(0),
+      gew_spaet: record[20].parse().unwrap_or(0),
+      max_hohlstunden: record[21].parse().unwrap_or(0),
+      max_aufsichten: record[22].parse().unwrap_or(0),
+      nachmittag_beruecksichtigen: &record[23] == "N",
+      max_stundenzahl: record[28].parse().unwrap_or(0),
+      max_verfuegungsstd: record[29].parse().unwrap_or(0),
+      max_nachmittag: record[33].parse().unwrap_or(0),
     });
 
     Ok(())
@@ -290,21 +305,33 @@ pub struct WilliTimeSlot {
 
 #[derive(Debug, Clone)]
 pub struct WilliTeacher {
-  /// "Kürzel"
-  ///
   /// Up to 5 chars
-  pub abbreviation: String,
-  /// "Kurzname"
-  ///
+  pub kuerzel: String,
   /// Up to 7 chars
-  pub short: String,
+  pub kurzname: String,
   /// Up to 40 chars
-  pub full_name: String,
+  pub name: String,
   /// Up to 40 chars
-  pub first_name: Option<String>,
-  /// Anrede
-  pub title: Option<String>,
-  pub function: Option<WilliTeacherFunction>,
+  pub vorname: Option<String>,
+  pub anrede: Option<String>,
+  // NOTE: 5 unknown fields
+  pub sollwochenstunden: usize,
+  // NOTE: 1 unknown field
+  pub funktion: Option<WilliTeacherFunction>,
+  pub luecken: usize,
+  // NOTE: 2 unknown fields
+  pub gew_block: usize,
+  pub gew_verteilung: usize,
+  pub gew_frueh: usize,
+  pub gew_spaet: usize,
+  pub max_hohlstunden: usize,
+  pub max_aufsichten: usize,
+  pub nachmittag_beruecksichtigen: bool,
+  // NOTE: 4 unknown fields
+  pub max_stundenzahl: usize,
+  pub max_verfuegungsstd: usize,
+  // NOTE: 3 unknown fields
+  pub max_nachmittag: usize,
   // TODO: Rest of the fields
 }
 
@@ -318,4 +345,20 @@ pub enum WilliTeacherFunction {
   S,
   /// Referendar
   R,
+}
+
+trait IfNonEmptyExt {
+  fn and_then<T, F: FnOnce(&Self) -> T>(&self, f: F) -> Option<T>;
+
+  fn or(&self, default: &'static str) -> &Self;
+}
+
+impl IfNonEmptyExt for str {
+  fn and_then<T, F: FnOnce(&Self) -> T>(&self, f: F) -> Option<T> {
+    (!self.is_empty()).then(|| f(self))
+  }
+
+  fn or(&self, default: &'static str) -> &Self {
+    (!self.is_empty()).then_some(self).unwrap_or(default)
+  }
 }
