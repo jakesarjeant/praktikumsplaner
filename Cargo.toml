@@ -13,6 +13,7 @@ members = [
 dioxus = "0.6.3"
 once_cell = "1.21.3"
 wasm-bindgen = "0.2.100"
+willi = { path = "./crates/willi" }
 
 [features]
 default = ["web"]

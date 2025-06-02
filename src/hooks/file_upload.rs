@@ -137,6 +137,6 @@ impl FileUploadState {
 
 #[derive(Clone)]
 pub struct UploadedFile {
-  file_name: String,
-  content: String,
+  pub file_name: String,
+  pub content: String,
 }

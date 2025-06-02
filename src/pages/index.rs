@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use willi::WilliDocument;
 
 use crate::{
   blocks::{schedule_form::ScheduleForm, student_form::StudentForm},
@@ -7,12 +8,18 @@ use crate::{
 
 #[component]
 pub fn IndexPage() -> Element {
+  let schedule = use_signal::<Option<WilliDocument>>(|| None);
+
   rsx! {
     PageContainer {
       Header {}
 
-      ScheduleForm {}
-      StudentForm {}
+      ScheduleForm {
+        schedule
+      }
+      StudentForm {
+        schedule
+      }
 
       Footer {}
     }

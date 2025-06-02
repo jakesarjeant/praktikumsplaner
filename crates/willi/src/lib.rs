@@ -202,7 +202,7 @@ impl WilliDocument {
 
   #[allow(non_snake_case)]
   fn parse_L(&mut self, index: usize, record: &StringRecord) -> Result<(), LineError> {
-    if index <= self.default_timetable.len() {
+    if index <= self.teachers.len() {
       warn!("Lehrer in falscher Reihenfolge");
     }
 
@@ -249,8 +249,8 @@ impl WilliDocument {
 
   #[allow(non_snake_case)]
   fn parse_F(&mut self, index: usize, record: &StringRecord) -> Result<(), LineError> {
-    if index <= self.default_timetable.len() {
-      warn!("Lehrer in falscher Reihenfolge");
+    if index <= self.subjects.len() {
+      warn!("Fächer in falscher Reihenfolge");
     }
 
     if record.len() < 7 {
@@ -277,8 +277,8 @@ impl WilliDocument {
 
   #[allow(non_snake_case)]
   fn parse_K(&mut self, index: usize, record: &StringRecord) -> Result<(), LineError> {
-    if index <= self.default_timetable.len() {
-      warn!("Lehrer in falscher Reihenfolge");
+    if index <= self.classes.len() {
+      warn!("Klassen in falscher Reihenfolge");
     }
 
     if record.len() < 6 {

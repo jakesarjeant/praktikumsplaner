@@ -3201,6 +3201,7 @@ dependencies = [
  "dioxus",
  "once_cell",
  "wasm-bindgen",
+ "willi",
 ]
 
 [[package]]

@@ -1,4 +1,7 @@
+use std::sync::Arc;
+
 use dioxus::prelude::*;
+use willi::WilliDocument;
 
 use crate::{
   components::{
@@ -8,12 +11,34 @@ use crate::{
     icon::{ARROW_RIGHT, FILE_TEXT},
     input_row::InputRow,
   },
-  hooks::file_upload::use_file_upload,
+  hooks::file_upload::{use_file_upload, UploadedFile},
 };
 
+#[derive(Clone, PartialEq, Props)]
+pub struct ScheduleFormProps {
+  schedule: Signal<Option<WilliDocument>>
+}
+
 #[component]
-pub fn ScheduleForm() -> Element {
-  let on_upload = use_callback(|_| Ok(()));
+pub fn ScheduleForm(props: ScheduleFormProps) -> Element {
+  let mut schedule_error = use_signal::<Option<willi::DocumentError>>(|| None);
+
+  let on_upload = use_callback(move |file: Arc<UploadedFile>| {
+    to_owned![props.schedule];
+
+    match file.content.parse() {
+      Ok(doc) => {
+        schedule.set(Some(doc));
+        schedule_error.set(None);
+        Ok(())
+      },
+      Err(e) => {
+        schedule.set(None);
+        schedule_error.set(Some(e));
+        Err(())
+      }
+    }
+  });
 
   let willi2_file = use_file_upload(|| None, on_upload);
 
