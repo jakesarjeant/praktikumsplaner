@@ -125,8 +125,7 @@ impl WilliDocument {
       // ("PLS", _) => todo!(),
       // ("PKS", _) => todo!(),
       // ("PRS", _) => todo!(),
-      // TODO: Collect warnings, rather than emitting one per line
-      (typ, _) => Ok(warn!("Unbekannter Zeilentyp '{typ}' wurde ignoriert")),
+      (_, _) => Ok(()),
     }
   }
 
