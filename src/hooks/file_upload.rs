@@ -93,7 +93,7 @@ impl FileUpload {
     self.state.set(FileUploadState::Failed { file_name })
   }
 
-  pub fn finish(&mut self, content: String) {
+  pub fn finish(&mut self, content: Vec<u8>) {
     let FileUploadState::Uploading { file_name } = (*self.state.read()).clone() else {
       return;
     };
@@ -138,5 +138,5 @@ impl FileUploadState {
 #[derive(Clone)]
 pub struct UploadedFile {
   pub file_name: String,
-  pub content: String,
+  pub content: Vec<u8>,
 }

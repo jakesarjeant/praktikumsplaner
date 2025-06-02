@@ -26,7 +26,7 @@ pub fn FileInput(props: FileInputProps) -> Element {
 
         target.begin(file_name.to_string());
 
-        if let Some(content) = file_engine.read_file_to_string(file_name).await {
+        if let Some(content) = file_engine.read_file(file_name).await {
           target.finish(content);
         } else {
           target.abort();

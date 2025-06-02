@@ -33,6 +33,12 @@ pub enum LineError {
   BadNumber(#[from] ParseIntError),
 }
 
+/// Represents a .BAL document.
+///
+/// # Important Note
+///
+/// .BAL files are usually encoded in ISO-LATIN-1. The encoding MUST be converted to UTF-8 for this
+/// to work properly.
 #[derive(Debug, Clone)]
 pub struct WilliDocument {
   pub header: WilliHeader,

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use dioxus::prelude::*;
+use encoding_rs::WINDOWS_1252;
 use willi::WilliDocument;
 
 use crate::{
@@ -26,14 +27,15 @@ pub fn ScheduleForm(props: ScheduleFormProps) -> Element {
   let on_upload = use_callback(move |file: Arc<UploadedFile>| {
     to_owned![props.schedule];
 
-    match file.content.parse() {
+    let (content_utf8, _, _) = WINDOWS_1252.decode(&file.content);
+
+    match content_utf8.parse() {
       Ok(doc) => {
         schedule.set(Some(doc));
         schedule_error.set(None);
         Ok(())
       },
       Err(e) => {
-        schedule.set(None);
         schedule_error.set(Some(e));
         Err(())
       }
