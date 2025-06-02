@@ -47,13 +47,13 @@ pub fn ScheduleForm(props: ScheduleFormProps) -> Element {
   rsx! {
     Card {
       title: rsx!{ Fragment { "Stundenplan Auswählen" } },
-      buttons: rsx! {
-        Button {
-          disabled: !willi2_file.is_valid() || willi2_file.is_empty(),
-          icon_after: ARROW_RIGHT,
-          "Weiter"
-        }
-      },
+      // buttons: rsx! {
+      //   Button {
+      //     disabled: !willi2_file.is_valid() || willi2_file.is_empty(),
+      //     icon_after: ARROW_RIGHT,
+      //     "Weiter"
+      //   }
+      // },
 
       p {
         "Öffnen sie eine WILLI2-Datei (Endung \".BAL\"), um mit der Planung loszulegen."

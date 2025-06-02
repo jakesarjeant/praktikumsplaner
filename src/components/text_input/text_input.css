@@ -51,7 +51,7 @@
     margin: 0;
     border: none;
     font-size: 1rem;
-    color: var(--text);
+    color: var(--text-important);
 }
 
 .text-input-wrapper:has(input:focus-visible) {

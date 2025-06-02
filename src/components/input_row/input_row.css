@@ -1,6 +1,6 @@
 .input-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     flex-flow: row wrap;
     gap: var(--space-2);
@@ -23,6 +23,7 @@
     gap: var(--space-2);
 
     margin-right: var(--space-4);
+    margin-top: calc(var(--space-2) + var(--border-width));
 }
 
 .input-row-description {

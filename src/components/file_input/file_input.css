@@ -33,7 +33,7 @@
 }
 
 .file-input-wrapper.fi-error {
-    border-color: var(--error);
+    border-color: var(--border-danger);
 }
 
 .file-input-wrapper .fi-icon-box,
@@ -50,7 +50,7 @@
 }
 
 .fi-error {
-    color: var(--error);
+    color: var(--danger);
 }
 
 .file-input-wrapper .fi-spinner {
@@ -68,6 +68,9 @@
 
 .file-input-wrapper .fi-file-name {
     flex-grow: 1;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .file-input-wrapper .fi-progress-bar {

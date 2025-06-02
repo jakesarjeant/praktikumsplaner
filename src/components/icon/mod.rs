@@ -41,3 +41,5 @@ include_icon!(FOLDER_DASHED, "/assets/phosphor-icons/folder-dashed.svg");
 include_icon!(SPINNER_BALL, "/assets/phosphor-icons/spinner-ball.svg");
 include_icon!(CHECK, "/assets/phosphor-icons/check.svg");
 include_icon!(X, "/assets/phosphor-icons/x.svg");
+include_icon!(TRASH, "/assets/phosphor-icons/trash.svg");
+include_icon!(DOTS_SIX_VERTICAL, "/assets/phosphor-icons/dots-six-vertical.svg");

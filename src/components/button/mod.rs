@@ -4,11 +4,19 @@ use crate::style;
 
 use super::icon::{Icon, IconShape};
 
+// TODO: Implement flavors
 #[derive(PartialEq, Clone, Props)]
 pub struct ButtonProps {
   children: Element,
   disabled: Option<bool>,
   icon_after: Option<IconShape>,
+}
+
+#[derive(Clone, PartialEq)]
+pub enum ButtonFlavor {
+  Normal,
+  Secondary,
+  Danger
 }
 
 #[component]
