@@ -11,3 +11,6 @@ Willi/
 # Added by cargo
 
 /target
+
+# NodeJS
+node_modules/
