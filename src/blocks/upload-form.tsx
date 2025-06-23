@@ -43,9 +43,6 @@ export default function UploadForm() {
             />
           </Label>
         </CardContent>
-        <CardFooter className="flex justify-end">
-          <Button disabled={file == null}>Weiter</Button>
-        </CardFooter>
       </Card>
     </>
   );
