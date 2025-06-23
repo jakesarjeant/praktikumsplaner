@@ -1,21 +1,12 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import StudentForm from "./blocks/student-form";
+import UploadForm from "./blocks/upload-form";
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
-    <>
-      <Card className="w-full max-w-lg">
-        <CardHeader>
-          <CardTitle>Stundenplan Auswählen</CardTitle>
-          <CardDescription>
-            Öffnen sie eine WILLI2-Datei (.BAL), um loszulegen.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    </>
+    <div className="flex flex-col gap-8 w-full max-w-2xl">
+      <UploadForm />
+      <StudentForm />
+    </div>
   );
 }
 
