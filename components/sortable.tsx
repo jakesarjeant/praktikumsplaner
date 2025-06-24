@@ -1,35 +1,57 @@
-import { ReactNode, useId, useMemo, type SetStateAction, type Dispatch } from "react"
-import { DndContext, closestCenter, type DragEndEvent, type UniqueIdentifier } from "@dnd-kit/core";
+import {
+  ReactNode,
+  useId,
+  useMemo,
+  type SetStateAction,
+  type Dispatch,
+} from "react";
+import {
+  DndContext,
+  closestCenter,
+  type DragEndEvent,
+  type UniqueIdentifier,
+} from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  arrayMove,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+
+export type RenderItem<I extends SortableItem> = (
+  args: ReturnType<typeof useSortable> & { item: I },
+) => ReactNode;
 
 export interface SortableProps<I extends SortableItem> {
   items: I[];
   updateSort: Dispatch<SetStateAction<I[]>>;
-  render: (item: I) => ReactNode;
+  render: RenderItem<I>;
 }
 
 export interface SortableItem {
   id: UniqueIdentifier;
 }
 
-export default function Sortable<I extends SortableItem>(props: SortableProps<I>) {
+export default function Sortable<I extends SortableItem>(
+  props: SortableProps<I>,
+) {
   const sortableId = useId();
 
   // TODO: UniqueIdentifier?
   const dataIds = useMemo<UniqueIdentifier[]>(
     () => props.items?.map(({ id }) => id) || [],
-    [props.items]
-  )
+    [props.items],
+  );
 
   function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
+    const { active, over } = event;
     if (active && over && active.id !== over.id) {
       props.updateSort((data) => {
-        const oldIndex = dataIds.indexOf(active.id)
-        const newIndex = dataIds.indexOf(over.id)
-        return arrayMove(data, oldIndex, newIndex)
-      })
+        const oldIndex = dataIds.indexOf(active.id);
+        const newIndex = dataIds.indexOf(over.id);
+        return arrayMove(data, oldIndex, newIndex);
+      });
     }
   }
 
@@ -44,7 +66,7 @@ export default function Sortable<I extends SortableItem>(props: SortableProps<I>
         items={props.items}
         strategy={verticalListSortingStrategy}
       >
-        {props.items.map(item => (
+        {props.items.map((item) => (
           <SortableItem render={props.render} item={item} key={item.id} />
         ))}
       </SortableContext>
@@ -52,12 +74,17 @@ export default function Sortable<I extends SortableItem>(props: SortableProps<I>
   );
 }
 
-function SortableItem<I>({render, item}: {render: (item: I) => ReactNode; item: I}) {
-  let {transform, transistion, setNodeRef, isDragging} = useSortable();
+function SortableItem<I extends SortableItem>({
+  render,
+  item,
+}: {
+  render: RenderItem<I>;
+  item: I;
+}) {
+  const sortable = useSortable({
+    id: item.id,
+  });
 
-    // TODO
-  return (
-    <>
-    </>
-  );
+  // TODO
+  return render({ ...sortable, item });
 }
