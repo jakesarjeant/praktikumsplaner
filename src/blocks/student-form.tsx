@@ -7,24 +7,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-} from "@/components/ui/popover";
-import { useEffect, useRef, useState, useMemo, type RefObject } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import Sortable from "@/components/sortable";
+import {
+  ComboInput,
+  ComboEmpty,
+  ComboGroup,
+  ComboItem,
+} from "@/components/combo-input";
 
 import { WilliStundenplan } from "willi";
 import { CSS } from "@dnd-kit/utilities";
@@ -33,27 +26,6 @@ import { GripVertical, Trash } from "lucide-react";
 // TODO: Accept the whole WilliStundenplan|null instead
 export default function StudentForm({ faecher }: { faecher: string[] }) {
   // TODO: Move all this stuff into a ComboInput component
-  const popoverRef = useRef<Element>(null);
-  const [width, setWidth] = useState(0);
-
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [subjInput, setSubjInput] = useState("");
-
-  useEffect(() => {
-    const onResize = () => {
-      setWidth(popoverRef.current?.getBoundingClientRect().width || 0);
-    };
-
-    onResize();
-
-    window.addEventListener("resize", onResize);
-
-    return () => {
-      window.removeEventListener("resize", onResize);
-    };
-  }, [popoverRef]);
-
-  const [subjectsOpen, setSubjectsOpen] = useState(false);
   // ---
 
   const [selectedSubjects, setSelectedSubjects] = useState<{ id: string }[]>(
@@ -88,64 +60,23 @@ export default function StudentForm({ faecher }: { faecher: string[] }) {
         </p>
         <Label className="gap-8 align-center">
           <span className="shrink-0">Fächer Wählen</span>
-          <Command
-            className="border-1 bg-background"
-            ref={popoverRef as RefObject<HTMLDivElement>}
-          >
-            {/* TODO: Maybe turn this into its own "combo-input" component */}
-            <Popover open={subjectsOpen} onOpenChange={setSubjectsOpen}>
-              {/* <PopoverTrigger> */}
-              <PopoverAnchor>
-                <CommandInput
-                  placeholder="Fach Suchen (Enter zum Auswählen)"
-                  wrapperClassName="border-0"
-                  value={subjInput}
-                  onValueChange={(v) => {
-                    setSubjInput(v);
-                    if (!subjectsOpen) {
-                      setSubjectsOpen(true);
-                    }
+          {/* TODO: ComboInput */}
+          <ComboInput placeholder="Fach Suchen (Enter zum Auswählen)">
+            <ComboEmpty>Keine Ergebnisse.</ComboEmpty>
+            <ComboGroup>
+              {availableSubjects.map((s) => (
+                <ComboItem
+                  key={s.id}
+                  value={s.id}
+                  onSelect={(val) => {
+                    setSelectedSubjects((s) => [...s, { id: val }]);
                   }}
-                  ref={inputRef}
-                  onFocus={() => setTimeout(() => setSubjectsOpen(true), 0)}
-                  onClick={() => setTimeout(() => setSubjectsOpen(true), 0)}
-                  onBlur={() => setSubjectsOpen(false)}
-                />
-              </PopoverAnchor>
-              {/* </PopoverTrigger> */}
-              <PopoverContent
-                className="bg-background mt-1 p-1"
-                style={{ width: `${width}px` }}
-                onOpenAutoFocus={(e) => e.preventDefault()}
-              >
-                <CommandList>
-                  <CommandEmpty>Keine Ergebnisse.</CommandEmpty>
-                  <CommandGroup>
-                    {/* <CommandItem>Chemie</CommandItem>
-                        <CommandItem>Physik</CommandItem> */}
-                    {availableSubjects.map((s) => (
-                      <CommandItem
-                        key={s.id}
-                        value={s.id}
-                        onSelect={(val) => {
-                          setSelectedSubjects((s) => [...s, { id: val }]);
-                          setSubjectsOpen(false);
-                          setSubjInput("");
-                          if (inputRef.current != null) {
-                            {
-                              /* inputRef.current.blur(); */
-                            }
-                          }
-                        }}
-                      >
-                        {s.id}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </PopoverContent>
-            </Popover>
-          </Command>
+                >
+                  {s.id}
+                </ComboItem>
+              ))}
+            </ComboGroup>
+          </ComboInput>
         </Label>
         <Sortable
           items={selectedSubjects}
