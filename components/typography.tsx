@@ -1,10 +1,14 @@
 import { HTMLAttributes } from "react";
+import { cn } from "@/lib/utils";
 
 export function H1(props: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h1
-      className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight text-balance"
       {...props}
+      className={cn(
+        "scroll-m-20 text-center text-4xl font-extrabold tracking-tight text-balance",
+        props.className,
+      )}
     />
   );
 }
@@ -12,8 +16,11 @@ export function H1(props: React.HTMLAttributes<HTMLHeadingElement>) {
 export function H2(props: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2
-      className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0"
       {...props}
+      className={cn(
+        "scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0",
+        props.className,
+      )}
     />
   );
 }
@@ -21,8 +28,11 @@ export function H2(props: React.HTMLAttributes<HTMLHeadingElement>) {
 export function H3(props: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className="scroll-m-20 text-2xl font-semibold tracking-tight"
       {...props}
+      className={cn(
+        "scroll-m-20 text-2xl font-semibold tracking-tight",
+        props.className,
+      )}
     />
   );
 }
@@ -30,8 +40,11 @@ export function H3(props: React.HTMLAttributes<HTMLHeadingElement>) {
 export function H4(props: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h4
-      className="scroll-m-20 text-xl font-semibold tracking-tight"
       {...props}
+      className={cn(
+        "scroll-m-20 text-xl font-semibold tracking-tight",
+        props.className,
+      )}
     />
   );
 }
@@ -100,5 +113,10 @@ export function Small(props: HTMLAttributes<HTMLSpanElement>) {
 }
 
 export function Muted(props: HTMLAttributes<HTMLParagraphElement>) {
-  return <p className="text-muted-foreground text-sm" {...props} />;
+  return (
+    <p
+      {...props}
+      className={cn("text-muted-foreground text-sm", props.className)}
+    />
+  );
 }
