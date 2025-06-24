@@ -128,12 +128,16 @@ impl WilliStundenplan {
   }
 
   // Yes, this is probably slow...
-  #[wasm_bindgen(getter)]
+  #[wasm_bindgen(getter, unchecked_return_type = "{[id:string]:FachZeile}")]
   pub fn faecher(&self) -> JsValue {
-    let mut obj = Object::new();
+    let obj = Object::new();
 
     for (key, value) in self.faecher.iter() {
-      Reflect::set(&obj, &JsValue::from_f64(key as f64), &value.clone().into());
+      let js_key = JsValue::from_str(&key.to_string());
+      let js_val = value.clone().into();
+      let id_key = JsValue::from_str("id");
+      Reflect::set(&js_val, &id_key, &js_key).expect("Failed to set ID");
+      Reflect::set(&obj, &js_key, &js_val).expect("Failed to update map");
     }
 
     obj.into()
