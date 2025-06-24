@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Muted } from "@/components/typography";
 import Sortable from "@/components/sortable";
 import {
   ComboInput,
@@ -19,25 +20,37 @@ import {
   ComboItem,
 } from "@/components/combo-input";
 
-import { WilliStundenplan } from "willi";
+import { WilliStundenplan, FachZeile } from "willi";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Trash } from "lucide-react";
 
 // TODO: Accept the whole WilliStundenplan|null instead
-export default function StudentForm({ faecher }: { faecher: string[] }) {
+export default function StudentForm({
+  plan,
+}: {
+  plan: WilliStundenplan | null;
+}) {
   // TODO: Move all this stuff into a ComboInput component
   // ---
 
-  const [selectedSubjects, setSelectedSubjects] = useState<{ id: string }[]>(
-    [],
-  );
+  const [selectedSubjects, setSelectedSubjects] = useState<
+    (FachZeile & { id: string })[]
+  >([]);
+  // Getter is quite expensive because we need to copy the entire table into a hashmap
+  const faecher = useMemo(() => plan?.faecher, [plan]);
   const availableSubjects = useMemo(
     () =>
-      faecher
-        .filter((f) => !selectedSubjects.find((s) => s.id == f))
-        .map((id) => ({ id })),
+      faecher &&
+      Object.entries(faecher)
+        .filter(([id]) => !selectedSubjects.find((s) => s.id == id))
+        .map(([id, f]) => {
+          Object.defineProperty(f, "id", { value: id });
+          return f;
+        }),
     [faecher, selectedSubjects],
-  );
+  ) as (FachZeile & { id: string })[];
+
+  const [studentName, setStudentName] = useState("");
 
   return (
     <Card className="w-full">
@@ -50,10 +63,20 @@ export default function StudentForm({ faecher }: { faecher: string[] }) {
       <CardContent>
         <Label className="gap-8 align-center">
           <span className="shrink-0">Vollständiger Name</span>
-          <Input type="text" id="student-name" placeholder="Max Mustermann" />
+          <Input
+            type="text"
+            id="student-name"
+            placeholder="Max Mustermann"
+            value={studentName}
+            onChange={(e) => setStudentName(e.target.value)}
+          />
         </Label>
         <Separator className="my-4" />
-        <div>
+        <div
+          data-disabled={!plan}
+          className="data-[disabled=true]:opacity-50 data-[disabled=true]:pointer-events-none \
+                     data-[disabled=true]:cursor-not-allowed data-[disabled=true]:select-none"
+        >
           <p className="mb-4">
             Mit der folgenden Suchfunktion können Sie aus den im hochgeladenen
             Stundenplan vorhandenen Fächern auswählen, und sie daraufhin durch
@@ -62,20 +85,31 @@ export default function StudentForm({ faecher }: { faecher: string[] }) {
           <Label className="gap-8 align-center">
             <span className="shrink-0">Fächer Wählen</span>
             {/* TODO: ComboInput */}
-            <ComboInput placeholder="Fach Suchen (Enter zum Auswählen)">
+            <ComboInput
+              placeholder="Fach Suchen (Enter zum Auswählen)"
+              disabled={!plan}
+            >
               <ComboEmpty>Keine Ergebnisse.</ComboEmpty>
               <ComboGroup>
-                {availableSubjects.map((s) => (
-                  <ComboItem
-                    key={s.id}
-                    value={s.id}
-                    onSelect={(val) => {
-                      setSelectedSubjects((s) => [...s, { id: val }]);
-                    }}
-                  >
-                    {s.id}
-                  </ComboItem>
-                ))}
+                {availableSubjects &&
+                  availableSubjects.map((s) => (
+                    <ComboItem
+                      key={s.id}
+                      keywords={[s.name || "", s.kuerzel]}
+                      value={s.id}
+                      onSelect={(val) => {
+                        setSelectedSubjects((s) => [
+                          ...s,
+                          availableSubjects.find((f) => f.id == val) as {
+                            id: string;
+                          } & FachZeile,
+                        ]);
+                      }}
+                    >
+                      <strong>{s.kuerzel}</strong>
+                      {s.name}
+                    </ComboItem>
+                  ))}
               </ComboGroup>
             </ComboInput>
           </Label>
@@ -114,13 +148,19 @@ export default function StudentForm({ faecher }: { faecher: string[] }) {
                     <GripVertical />
                   </Button>
                   <span className="bold font-mono">{1 + idx}.</span>
-                  <span>{item.id}</span>
+                  <strong>{item.kuerzel}</strong>
+                  <span>{item.name}</span>
                 </div>
                 {/* TODO: Implement deletion */}
                 <Button
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-destructive size-7 hover:bg-transparent"
+                  onClick={() =>
+                    setSelectedSubjects((subs) =>
+                      subs.filter((_, i) => i != idx),
+                    )
+                  }
                 >
                   <Trash />
                 </Button>
@@ -129,8 +169,16 @@ export default function StudentForm({ faecher }: { faecher: string[] }) {
           />
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end">
-        <Button>Plan Erstellen</Button>
+      <CardFooter className="flex justify-end gap-4">
+        <Muted>
+          {!selectedSubjects.length && "Mindestens ein Fach auswählen"}
+          {!selectedSubjects.length && !studentName && " und "}
+          {!studentName && "Namen eingeben"}
+          {(!studentName || !selectedSubjects.length) && "."}
+        </Muted>
+        <Button disabled={!selectedSubjects.length || !studentName}>
+          Plan Erstellen
+        </Button>
       </CardFooter>
     </Card>
   );

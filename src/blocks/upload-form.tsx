@@ -63,11 +63,25 @@ export default function UploadForm({
             <span className="shrink-0">WILLI2-Datei</span>
             <Input
               type="file"
-              aria-invalid
+              aria-invalid={!!errors.length}
               className="flex-[1 0 0] flex"
               onChange={handleFile}
             />
           </Label>
+          {!!errors.length && (
+            <details className="mt-3">
+              <summary className="text-destructive">
+                Ungültige WILLI-Datei. Bitte öffnen Sie eine andere Datei.
+              </summary>
+              <ul className="list-disc pl-10">
+                {errors.map((err, key) => (
+                  <li key={key}>
+                    Eintrag {err.record}: {err.error}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
         </CardContent>
       </Card>
     </>
