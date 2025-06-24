@@ -1,9 +1,11 @@
-use std::{io::Cursor, str::FromStr};
+use std::{collections::HashMap, io::Cursor, str::FromStr};
 
 use csv::{Position, ReaderBuilder, StringRecord};
+use js_sys::{Object, Reflect};
 use serde::Deserialize;
+use serde_repr::Deserialize_repr;
 use thiserror::Error;
-use tracing::{debug, error};
+use tracing::{debug, error, warn};
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Error)]
@@ -25,6 +27,8 @@ pub struct WilliStundenplan {
   header: Option<WilliHeader>,
   /// Schuldaten
   schuldaten: Option<SchuldatenZeile>,
+  /// Fächer
+  faecher: SparseVec<FachZeile>,
 }
 
 impl WilliStundenplan {
@@ -44,6 +48,7 @@ impl WilliStundenplan {
     let mut plan = WilliStundenplan {
       header,
       schuldaten: None,
+      faecher: Default::default(),
     };
 
     let mut csv_reader = ReaderBuilder::new()
@@ -99,7 +104,14 @@ impl WilliStundenplan {
       }
 
       match (&typ[..], id) {
-        ("W", _) => plan.schuldaten = Some(deserialize!(record)),
+        ("W", _) => {
+          plan.schuldaten = Some(deserialize!(record));
+        }
+        ("F", id) => {
+          if let Some(old) = plan.faecher.insert(id, deserialize!(record)) {
+            warn!("Record {id} was overwritten! Old record: {:?}", old)
+          }
+        }
         _ => {}
       }
     }
@@ -113,6 +125,18 @@ impl WilliStundenplan {
   #[wasm_bindgen(getter)]
   pub fn willi_version(&self) -> Option<usize> {
     self.header.as_ref().map(|h| h.version)
+  }
+
+  // Yes, this is probably slow...
+  #[wasm_bindgen(getter)]
+  pub fn faecher(&self) -> JsValue {
+    let mut obj = Object::new();
+
+    for (key, value) in self.faecher.iter() {
+      Reflect::set(&obj, &JsValue::from_f64(key as f64), &value.clone().into());
+    }
+
+    obj.into()
   }
 }
 
@@ -184,6 +208,8 @@ impl FromStr for WilliHeader {
 // W-Zeile
 #[derive(Debug, Clone, Deserialize)]
 pub struct SchuldatenZeile {
+  #[allow(dead_code)]
+  id: String,
   pub schulname: String,
   #[serde(default)]
   pub titel1: Option<String>,
@@ -193,6 +219,175 @@ pub struct SchuldatenZeile {
   pub schulnummer: Option<usize>,
 }
 
+// TODO: WP
+// TODO: WI
+// TODO: Tnn
+// TODO: Snn
+// TODO: TRnnzz
+// TODO: Qnn
+// TODO: MP
+// TODO: Enn
+// TODO: Lnn
+// TODO: LBnn
+// TODO: LCnn
+// TODO: LQnn
+// TODO: LGnn
+// TODO: Rnn
+// TODO: RQnn
+// TODO: RGnn
+// TODO: Gnn
+
+// F-Zeile
+#[derive(Debug, Clone, Deserialize)]
+#[wasm_bindgen]
+pub struct FachZeile {
+  #[allow(dead_code)]
+  id: String,
+  #[wasm_bindgen(getter_with_clone)]
+  pub kuerzel: String,
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub kurz: Option<String>,
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub name: Option<String>,
+  #[serde(default)]
+  // #[wasm_bindgen(getter_with_clone)]
+  pub merkmal: Option<usize>,
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub eigenschaft: Option<FachEigenschaft>,
+  #[serde(default)]
+  pub konzentration: Option<Konzentration>,
+  #[serde(default)]
+  pub wertung: Option<Wertung>,
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub fachgruppe: Option<String>,
+  #[serde(default)]
+  pub fachraumgruppe: Option<usize>,
+  // TODO: Was heißt "Ganzzahl im RGB-Format?"
+  #[serde(default)]
+  pub farbe: Option<usize>,
+  #[serde(default)]
+  pub fakultasfilter: Option<usize>,
+  // TODO: Proper enum representation
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub zeiteinschraenkungen: Option<String>,
+  // TODO: Parse time filters
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub zeitfilter: Option<String>,
+  // TODO: Does this use IDs ore kuerzel?
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub fachkollision: Vec<usize>,
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub km_fach: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[wasm_bindgen]
+pub enum FachEigenschaft {
+  /// Doppelstündiges Fach
+  D,
+  /// Bei Pool-Verplanung ignoriert
+  I,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize_repr, Default)]
+#[repr(u8)]
+#[wasm_bindgen]
+pub enum Konzentration {
+  #[default]
+  Minimum = 0,
+  Niedrig = 1,
+  Mittel = 2,
+  Hoch = 3,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[wasm_bindgen]
+pub enum Wertung {
+  /// Wissenschaftlich
+  W,
+  /// Nichtwissenschaftlich
+  N,
+}
+
+// TODO: FQnn
+// TODO: CT
+// TODO: C
+// TODO: Knn
+// TODO: KBnn
+// TODO: KQnn
+// TODO: KDnn
+// TODO: KGnn
+// TODO: Xnn
+// TODO: Ynn
+// TODO: Onn
+// TODO: Znn
+// TODO: Ann
+// TODO: AVtt
+// TODO: Jnn
+// TODO: Unn
+// TODO: Bnn
+// TODO: VLnn
+// TODO: VSnn
+// TODO: PL
+// TODO: PLS
+// TODO: PKS
+// TODO: PRS
+// TODO: Dnn
+// TODO: MK
+
+//// UTILITY DATA STRUCTURES ////
+
+// TODO: Option<Box<T>> to curb memory usage?
+// TODO: Custom debug impl that collapses holes into e.g. <4 empty>
+#[derive(Clone, Debug)]
+pub struct SparseVec<T>(Vec<Option<T>>);
+
+impl<T> Default for SparseVec<T> {
+  fn default() -> Self {
+    SparseVec(vec![])
+  }
+}
+
+impl<T> SparseVec<T> {
+  pub fn insert(&mut self, idx: usize, val: T) -> Option<T> {
+    if self.0.len() > idx {
+      return self.0[idx].replace(val);
+    }
+
+    while self.0.len() < idx {
+      self.0.push(None);
+    }
+
+    self.0.push(Some(val));
+    return None;
+  }
+
+  pub fn get(&self, idx: usize) -> Option<&T> {
+    self.0.get(idx).and_then(|x| x.as_ref())
+  }
+
+  pub fn get_mut(&mut self, idx: usize) -> Option<&mut T> {
+    self.0.get_mut(idx).and_then(|x| x.as_mut())
+  }
+
+  pub fn iter(&self) -> impl Iterator<Item = (usize, &T)> {
+    self
+      .0
+      .iter()
+      .enumerate()
+      .filter_map(|(id, x)| x.as_ref().map(|x| (id, x)))
+  }
+}
+
+//// INITIALIZATION ////
 #[wasm_bindgen(start)]
 pub fn start() -> Result<(), JsValue> {
   // print pretty errors in wasm https://github.com/rustwasm/console_error_panic_hook
