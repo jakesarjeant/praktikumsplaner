@@ -109,7 +109,6 @@ export function ComboItem({
   ...props
 }: React.ComponentProps<typeof CommandItem>) {
   const [setOpen, setInputVal] = useContext(ComboContext);
-  /* console.log("combo cx:", useContext(ComboContext)); */
 
   return (
     <CommandItem
