@@ -20,12 +20,12 @@ import {
 } from "@dnd-kit/sortable";
 
 export type RenderItem<I extends SortableItem> = (
-  args: ReturnType<typeof useSortable> & { item: I },
+  args: ReturnType<typeof useSortable> & { item: I; idx: number },
 ) => ReactNode;
 
 export interface SortableProps<I extends SortableItem> {
   items: I[];
-  updateSort: Dispatch<SetStateAction<I[]>>;
+  updateSort: Dispatch<(cur: I[]) => I[]>;
   render: RenderItem<I>;
 }
 
@@ -66,8 +66,13 @@ export default function Sortable<I extends SortableItem>(
         items={props.items}
         strategy={verticalListSortingStrategy}
       >
-        {props.items.map((item) => (
-          <SortableItem render={props.render} item={item} key={item.id} />
+        {props.items.map((item, idx) => (
+          <SortableItem
+            render={props.render}
+            idx={idx}
+            item={item}
+            key={item.id}
+          />
         ))}
       </SortableContext>
     </DndContext>
@@ -77,14 +82,16 @@ export default function Sortable<I extends SortableItem>(
 function SortableItem<I extends SortableItem>({
   render,
   item,
+  idx,
 }: {
   render: RenderItem<I>;
   item: I;
+  idx: number;
 }) {
   const sortable = useSortable({
     id: item.id,
   });
 
   // TODO
-  return render({ ...sortable, item });
+  return render({ ...sortable, item, idx });
 }

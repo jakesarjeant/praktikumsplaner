@@ -5,7 +5,7 @@ function App() {
   return (
     <div className="flex flex-col gap-8 w-full max-w-2xl">
       <UploadForm />
-      <StudentForm />
+      <StudentForm faecher={["Chemie", "Physik", "Mathe", "Musik"]} />
     </div>
   );
 }
