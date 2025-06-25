@@ -55,7 +55,7 @@ export default function UploadForm({
         </CardHeader>
         <CardContent>
           <p>
-            Bitte Laden Sie einen WILLI-Stundenplan (Dateieendung .BAL) hoch,
+            Bitte Laden Sie einen WILLI-Stundenplan (Dateiendung .BAL) hoch,
             der für die Planung verwendet werden soll.
           </p>
           <Separator className="my-4" />
