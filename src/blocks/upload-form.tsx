@@ -5,11 +5,22 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
-import { useState, useEffect, type ChangeEvent } from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import { WilliStundenplan, WilliParseError, parse_plan } from "willi";
 
 export default function UploadForm({
@@ -18,11 +29,14 @@ export default function UploadForm({
   setPlan: React.Dispatch<React.SetStateAction<WilliStundenplan | null>>;
 }) {
   const [file, setFile] = useState<File | null>(null);
-
   const [errors, setErrors] = useState<WilliParseError[]>([]);
+  // Initially, we consider the first upload already "confirmed"
+  const [confirm, setConfirm] = useState(true);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) setFile(e.target.files[0]);
+    setConfirm(false);
   };
 
   // Parse/Validate file
@@ -31,7 +45,7 @@ export default function UploadForm({
 
     const reader = new FileReader();
     reader.onload = () => {
-      let { plan, errors } = parse_plan(reader.result as string);
+      const { plan, errors } = parse_plan(reader.result as string);
       setErrors(errors);
       setPlan(plan);
 
@@ -42,7 +56,10 @@ export default function UploadForm({
     };
 
     reader.readAsText(file, "windows-1252");
-  }, [file]);
+  }, [file, setPlan, confirm]);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
 
   return (
     <>
@@ -59,15 +76,26 @@ export default function UploadForm({
             der für die Planung verwendet werden soll.
           </p>
           <Separator className="my-4" />
-          <Label className="gap-8">
-            <span className="shrink-0">WILLI2-Datei</span>
-            <Input
-              type="file"
-              aria-invalid={!!errors.length}
-              className="flex-[1 0 0] flex"
-              onChange={handleFile}
-            />
-          </Label>
+          <button className="gap-8 p-0 m-0 w-full border-0 flex items-center focus-visible:outline-none group"
+                  onClickCapture={(e) => {
+            e.stopPropagation();
+            if (!confirm) setShowConfirm(true);
+            else
+              inputRef.current?.click();
+          }}>
+            <Label htmlFor="file" className="shrink-0">WILLI2-Datei</Label>
+            <div className="border-0 p-0 m-0 w-full">
+              <Input
+                type="file"
+                id="file"
+                ref={inputRef}
+                aria-invalid={!!errors.length}
+                tabIndex={-1}
+                className="flex-[1 0 0] flex pointer-events-none group-focus-visible:border-ring group-focus-visible:ring-ring/50 group-focus-visible:ring-[3px]"
+                onChange={handleFile}
+              />
+            </div>
+          </button>
           {!!errors.length && (
             <details className="mt-3">
               <summary className="text-destructive">
@@ -84,6 +112,27 @@ export default function UploadForm({
           )}
         </CardContent>
       </Card>
+      <AlertDialog open={showConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Wirklich ändern?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Wenn sie einen anderen Stundenplan öffnen, werden Ihre Auswahlen zurückgesetzt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowConfirm(false);
+            }}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setTimeout(() => setShowConfirm(false), 0);
+              inputRef.current?.click();
+            }}>Weiter</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
