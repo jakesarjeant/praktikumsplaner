@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Muted } from "@/components/typography";
@@ -51,6 +51,10 @@ export default function StudentForm({
   ) as (FachZeile & { id: string })[];
 
   const [studentName, setStudentName] = useState("");
+
+  useEffect(() => {
+    setSelectedSubjects([]);
+  }, [plan]);
 
   return (
     <Card className="w-full">
