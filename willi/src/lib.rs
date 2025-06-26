@@ -29,6 +29,10 @@ pub struct WilliStundenplan {
   schuldaten: Option<SchuldatenZeile>,
   /// Fächer
   faecher: SparseVec<FachZeile>,
+  /// Unterrichtseinheit
+  unterrichtseinheiten: SparseVec<UnterrichtsZeile>,
+  /// Stunden im Lehrerplan
+  stunden_lehrerplan: Vec<LehrerStundenZeile>,
 }
 
 impl WilliStundenplan {
@@ -49,6 +53,8 @@ impl WilliStundenplan {
       header,
       schuldaten: None,
       faecher: Default::default(),
+      unterrichtseinheiten: Default::default(),
+      stunden_lehrerplan: vec![],
     };
 
     let mut csv_reader = ReaderBuilder::new()
@@ -103,21 +109,44 @@ impl WilliStundenplan {
         };
       }
 
+      macro_rules! overwrite_warn {
+        ($expr:expr) => {
+          if let Some(old) = $expr {
+            warn!("Record {id} was overwritten! Old record: {:?}", old)
+          }
+        };
+      }
+
       match (&typ[..], id) {
         ("W", _) => {
           plan.schuldaten = Some(deserialize!(record));
         }
-        ("F", id) => {
-          if let Some(old) = plan.faecher.insert(id, deserialize!(record)) {
-            warn!("Record {id} was overwritten! Old record: {:?}", old)
-          }
-        }
+        ("F", id) => overwrite_warn!(plan.faecher.insert(id, deserialize!(record))),
+        ("U", id) => overwrite_warn!(plan.unterrichtseinheiten.insert(id, deserialize!(record))),
+        ("PL", _) => plan.stunden_lehrerplan.push(deserialize!(record)),
         _ => {}
       }
     }
 
     (plan, errors)
   }
+}
+
+// Yes, this is probably slow... Better idea?
+macro_rules! to_js_object {
+  ($data:expr) => {{
+    let obj = Object::new();
+
+    for (key, value) in $data {
+      let js_key = JsValue::from_str(&key.to_string());
+      let js_val = value.clone().into();
+      let id_key = JsValue::from_str("id");
+      Reflect::set(&js_val, &id_key, &js_key).expect("Failed to set ID");
+      Reflect::set(&obj, &js_key, &js_val).expect("Failed to update map");
+    }
+
+    obj.into()
+  }};
 }
 
 #[wasm_bindgen]
@@ -127,20 +156,18 @@ impl WilliStundenplan {
     self.header.as_ref().map(|h| h.version)
   }
 
-  // Yes, this is probably slow...
   #[wasm_bindgen(getter, unchecked_return_type = "{[id:string]:FachZeile}")]
   pub fn faecher(&self) -> JsValue {
-    let obj = Object::new();
+    to_js_object!(self.faecher.iter())
+  }
 
-    for (key, value) in self.faecher.iter() {
-      let js_key = JsValue::from_str(&key.to_string());
-      let js_val = value.clone().into();
-      let id_key = JsValue::from_str("id");
-      Reflect::set(&js_val, &id_key, &js_key).expect("Failed to set ID");
-      Reflect::set(&obj, &js_key, &js_val).expect("Failed to update map");
-    }
+  #[wasm_bindgen(getter, unchecked_return_type = "{[id:string]:UnterrichtsZeile}")]
+  pub fn unterrichte(&self) -> JsValue {
+    to_js_object!(self.unterrichtseinheiten.iter())
+  }
 
-    obj.into()
+  pub fn stunden_lehrerplan(&self) -> Vec<LehrerStundenZeile> {
+    self.stunden_lehrerplan.clone()
   }
 }
 
@@ -336,11 +363,155 @@ pub enum Wertung {
 // TODO: Ann
 // TODO: AVtt
 // TODO: Jnn
-// TODO: Unn
+
+// U-Zeile
+#[derive(Debug, Clone, Deserialize)]
+#[wasm_bindgen]
+pub struct UnterrichtsZeile {
+  #[allow(dead_code)]
+  id: String,
+  /// Kuerzel der Lehrkraft
+  #[wasm_bindgen(getter_with_clone)]
+  pub lehrkraft: String,
+  /// Kuerzel des Fachs
+  #[wasm_bindgen(getter_with_clone)]
+  pub fach: String,
+  /// Kuerzel der Klasse
+  #[wasm_bindgen(getter_with_clone)]
+  pub klasse: String,
+  #[wasm_bindgen(getter_with_clone)]
+  #[serde(default)]
+  pub kopplung: Option<String>,
+  #[serde(default)]
+  pub stundenzahl: u8,
+  #[serde(default)]
+  pub stundenzahl_klasse: Option<usize>,
+  #[serde(default)]
+  pub stundenzahl_lehrer: Option<usize>,
+  #[serde(default)]
+  pub stundenzahl_fachraum: Option<usize>,
+  #[serde(default)]
+  pub schuelerzahl: Option<usize>,
+  // PUB TODO: Proper enum/static type
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub besonderheiten: Option<String>,
+  #[wasm_bindgen(getter_with_clone)]
+  #[serde(default)]
+  pub lehrerbezeichner: Option<String>,
+  #[wasm_bindgen(getter_with_clone)]
+  #[serde(default)]
+  pub fachbezeichner: Option<String>,
+  #[wasm_bindgen(getter_with_clone)]
+  #[serde(default)]
+  pub klassenbezeichner: Option<String>,
+  #[serde(default)]
+  pub fachraumgruppe: Option<usize>,
+  /// Kuerzel des fest vorgesehenen Raums
+  #[wasm_bindgen(getter_with_clone)]
+  #[serde(default)]
+  pub raum: Option<String>,
+  /// Minimale anzahl Doppelstnden
+  #[serde(default)]
+  pub doppmin: Option<usize>,
+  /// Maximale anzahl Doppelstnden
+  #[serde(default)]
+  pub doppmax: Option<usize>,
+  #[serde(default)]
+  pub blockgroesse: Option<usize>,
+  #[serde(default)]
+  pub max_pro_tag: Option<usize>,
+  // PUB TODO: Proper enum/static type
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub doppelstundenparameter: Option<String>,
+  // PUB TODO: Parse field
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub b_unterrichtseinheit: Option<String>,
+  // PUB TODO: Parse field
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub zeiteinschraenkungen: Option<String>,
+  // PUB TODO: Parse field
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub zeitfilter: Option<String>,
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub bedingung: Option<String>,
+  #[serde(default)]
+  pub schuelerfilter: Option<usize>,
+  #[serde(default)]
+  pub wunschraster: Option<usize>,
+  // PUB TODO: Parse field
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub unterrichtsphase: Option<String>,
+  // PUB TODO: Restrict to 0..3
+  #[serde(default)]
+  pub gewicht_folgetage: Option<usize>,
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub asv_unterrichtsart: Option<String>,
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub asv_bereich: Option<String>,
+}
+
 // TODO: Bnn
 // TODO: VLnn
 // TODO: VSnn
-// TODO: PL
+
+// PL-Zeile
+#[derive(Clone, Debug, Deserialize)]
+#[wasm_bindgen]
+pub struct LehrerStundenZeile {
+  #[allow(dead_code)]
+  id: String,
+  #[wasm_bindgen(getter_with_clone)]
+  pub tag_stunde: TagStunde,
+  #[wasm_bindgen(getter_with_clone)]
+  pub lehrkraft: String,
+  #[wasm_bindgen(getter_with_clone)]
+  pub klasse: String,
+  #[wasm_bindgen(getter_with_clone)]
+  pub fach: String,
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub raum: Option<String>,
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub fixierung: Option<String>,
+}
+
+#[derive(Clone, Debug)]
+#[wasm_bindgen]
+pub struct TagStunde {
+  #[wasm_bindgen(getter_with_clone)]
+  pub tag: String,
+  #[wasm_bindgen(getter_with_clone)]
+  pub stunde: String,
+}
+
+impl<'de> Deserialize<'de> for TagStunde {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'de>,
+  {
+    let string = String::deserialize(deserializer)?;
+
+    let Some((tag, stunde)) = string
+      .split_once(" ")
+      .map(|(t, s)| (t.to_string(), s.to_string()))
+    else {
+      return Err(serde::de::Error::custom("Ungültige Stundenzuordnung"));
+    };
+
+    Ok(TagStunde { tag, stunde })
+  }
+}
+
 // TODO: PLS
 // TODO: PKS
 // TODO: PRS
