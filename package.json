@@ -1,13 +1,13 @@
 {
   "name": "praktikumsplaner",
   "private": true,
-  "workspaces": [
-    "willi/pkg"
-  ],
+  "workspaces": ["willi/pkg", "core/pkg"],
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -i 'vite' 'npm run dev-willi' 'npm run dev-core'",
+    "dev-willi": "nodemon --exec 'wasm-pack build' ./willi/ -e rs,toml --ignore ./willi/pkg/",
+    "dev-core": "nodemon --exec 'wasm-pack build' ./core/ -e rs,toml --ignore ./core/pkg/",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -42,12 +42,14 @@
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
+    "concurrently": "^9.2.0",
     "eslint": "^9.25.0",
     "eslint-import-resolver-typescript": "^4.4.3",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
+    "nodemon": "^3.1.10",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.30.1",
     "typescript-language-server": "^4.3.4",
