@@ -1,4 +1,5 @@
 use std::{fs::File, io::Read};
+use comfy_table::Table;
 use planner_core::{generate, FachGewichtung};
 use willi::WilliStundenplan;
 
@@ -33,5 +34,11 @@ fn main() {
     ]
   );
 
-  println!("Solution: {:?}", solution);
+  println!("Lösung: {solution:?}");
+
+  // let mut table = Table::new();
+
+  // table.set_header(vec!["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]);
+
+  // for day in
 }

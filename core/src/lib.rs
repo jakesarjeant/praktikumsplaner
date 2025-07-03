@@ -54,7 +54,7 @@ impl Problem {
         })
         .sum::<f64>();
 
-      num_classes + BALANCE_WT * imbalance
+      num_classes + (BALANCE_WT * imbalance)
     }
 
     // Abbruchbedingung: letzte Stunde erreicht.
@@ -186,7 +186,8 @@ pub fn generate(
     let period_in_day = plan
       .stunden()
       .iter()
-      .find_map(|(id, std)| (std.kurz == line.tag_stunde.stunde).then_some(id))
+      .enumerate()
+      .find_map(|(id, (_, std))| (std.kurz == line.tag_stunde.stunde).then_some(id))
       .expect("Ungültige Stunde");
 
     let Some(slot) = timeslots
