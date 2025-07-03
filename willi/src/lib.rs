@@ -33,6 +33,12 @@ pub struct WilliStundenplan {
   unterrichtseinheiten: SparseVec<UnterrichtsZeile>,
   /// Stunden im Lehrerplan
   stunden_lehrerplan: Vec<LehrerStundenZeile>,
+  /// Klassen
+  klassen: SparseVec<KlassenZeile>,
+  /// Tage
+  tage: SparseVec<TagZeile>,
+  /// Stunden
+  stunden: SparseVec<StundenZeile>
 }
 
 impl WilliStundenplan {
@@ -54,7 +60,10 @@ impl WilliStundenplan {
       schuldaten: None,
       faecher: Default::default(),
       unterrichtseinheiten: Default::default(),
+      klassen: Default::default(),
       stunden_lehrerplan: vec![],
+      tage: Default::default(),
+      stunden: Default::default()
     };
 
     let mut csv_reader = ReaderBuilder::new()
@@ -124,11 +133,30 @@ impl WilliStundenplan {
         ("F", id) => overwrite_warn!(plan.faecher.insert(id, deserialize!(record))),
         ("U", id) => overwrite_warn!(plan.unterrichtseinheiten.insert(id, deserialize!(record))),
         ("PL", _) => plan.stunden_lehrerplan.push(deserialize!(record)),
+        ("K", id) => overwrite_warn!(plan.klassen.insert(id, deserialize!(record))),
+        ("T", id) => overwrite_warn!(plan.tage.insert(id, deserialize!(record))),
+        ("S", id) => overwrite_warn!(plan.stunden.insert(id, deserialize!(record))),
         _ => {}
       }
     }
 
     (plan, errors)
+  }
+
+  pub fn klassen(&self) -> &SparseVec<KlassenZeile> {
+    &self.klassen
+  }
+
+  pub fn tage(&self) -> &SparseVec<TagZeile> {
+    &self.tage
+  }
+
+  pub fn lehrerstunden(&self) -> &Vec<LehrerStundenZeile> {
+    &self.stunden_lehrerplan
+  }
+
+  pub fn stunden(&self) -> &SparseVec<StundenZeile> {
+    &self.stunden
   }
 }
 
@@ -252,8 +280,46 @@ pub struct SchuldatenZeile {
 
 // TODO: WP
 // TODO: WI
-// TODO: Tnn
-// TODO: Snn
+
+// T-Zeile
+#[derive(Debug, Clone, Deserialize)]
+#[wasm_bindgen]
+pub struct TagZeile {
+  #[allow(dead_code)]
+  id: String,
+  #[wasm_bindgen(getter_with_clone)]
+  pub kurz: String,
+  #[wasm_bindgen(getter_with_clone)]
+  pub lang: String,
+  // TODO: Parse field
+  #[wasm_bindgen(getter_with_clone)]
+  pub stundenmerkmale: String,
+  // TODO: Parse field
+  #[wasm_bindgen(getter_with_clone)]
+  pub pausen: String,
+  // TODO: Parse field
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub stundenzeiten: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[wasm_bindgen]
+pub struct StundenZeile {
+  #[allow(dead_code)]
+  id: String,
+  #[wasm_bindgen(getter_with_clone)]
+  pub kurz: String,
+  #[wasm_bindgen(getter_with_clone)]
+  pub lang: String,
+  // TODO: Parse field
+  #[wasm_bindgen(getter_with_clone)]
+  pub von: String,
+  // TODO: Parse field
+  #[wasm_bindgen(getter_with_clone)]
+  pub bis: String,
+}
+
 // TODO: TRnnzz
 // TODO: Qnn
 // TODO: MP
@@ -351,7 +417,60 @@ pub enum Wertung {
 // TODO: FQnn
 // TODO: CT
 // TODO: C
+
 // TODO: Knn
+// K-Zeile
+#[derive(Debug, Clone, Deserialize)]
+#[wasm_bindgen]
+pub struct KlassenZeile {
+  #[allow(dead_code)]
+  id: String,
+  #[wasm_bindgen(getter_with_clone)]
+  pub kuerzel: String,
+  #[wasm_bindgen(getter_with_clone)]
+  pub kurz: Option<String>,
+  #[wasm_bindgen(getter_with_clone)]
+  pub name: Option<String>,
+  /// "Kürzel des Klassenraums"
+  #[wasm_bindgen(getter_with_clone)]
+  pub klassenraum: Option<String>,
+  #[wasm_bindgen(getter_with_clone)]
+  pub klassenleiter: Option<String>,
+  #[wasm_bindgen(getter_with_clone)]
+  pub zweitklassenleiter: Option<String>,
+  pub deputat: Option<usize>,
+  pub schuelerzahl: Option<usize>,
+  pub weiblich: Option<usize>,
+  pub jahrgangsstufe: Option<usize>,
+  // TODO: Parse field
+  #[wasm_bindgen(getter_with_clone)]
+  pub besonderheiten: Option<String>,
+  #[wasm_bindgen(getter_with_clone)]
+  pub schultyp: Option<String>,
+  // TODO: Was heißt "ganzzahl im RGB-Format?"
+  #[wasm_bindgen(getter_with_clone)]
+  pub farbe: Option<String>,
+  #[wasm_bindgen(getter_with_clone)]
+  pub stammklasse: Option<String>,
+  pub mittagspause_min: usize,
+  pub mittagspause_max: usize,
+  pub nachmittag_max: usize,
+  #[wasm_bindgen(getter_with_clone)]
+  pub schule: Option<String>,
+  /// Anzahl der katholischen Schüler in der Klasse
+  pub rk: Option<usize>,
+  /// Anzahl der evangelischen Schüler in der Klasse
+  pub ev: Option<usize>,
+  /// Anzahl der "sonstigen" Schüler in der Klasse (vermutlich bezogen auf Religion?)
+  pub sonst: Option<usize>,
+  /// Anzahl der Fahrschüler in der Klasse
+  pub fahr: Option<usize>,
+  pub zeitraster: Option<u8>,
+  #[wasm_bindgen(getter_with_clone)]
+  #[serde(default)]
+  pub asv_klasse: Option<String>,
+}
+
 // TODO: KBnn
 // TODO: KQnn
 // TODO: KDnn
