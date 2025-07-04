@@ -1,6 +1,7 @@
 use std::{fs::File, io::Read};
 use comfy_table::Table;
 use planner_core::{generate, FachGewichtung};
+use tracing::{level_filters::LevelFilter, Level};
 use willi::WilliStundenplan;
 
 fn main() {
@@ -19,6 +20,8 @@ fn main() {
       println!("{}", error.1);
     }
   }
+
+  tracing_subscriber::fmt().with_max_level(LevelFilter::DEBUG).init();
 
   let solution = generate(
     &plan,
