@@ -22,7 +22,7 @@ import {
 
 import { WilliStundenplan, FachZeile } from "willi";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash } from "lucide-react";
+import { GripVertical, X } from "lucide-react";
 
 // TODO: Accept the whole WilliStundenplan|null instead
 export default function StudentForm({
@@ -151,7 +151,9 @@ export default function StudentForm({
                   >
                     <GripVertical />
                   </Button>
-                  <span className="bold font-mono">{1 + idx}.</span>
+                  <strong className="font-[monospace] text-sm">
+                    {1 + idx}.
+                  </strong>
                   <strong>{item.kuerzel}</strong>
                   <span>{item.name}</span>
                 </div>
@@ -166,7 +168,7 @@ export default function StudentForm({
                     )
                   }
                 >
-                  <Trash />
+                  <X />
                 </Button>
               </div>
             )}

@@ -14,8 +14,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -60,7 +59,6 @@ export default function UploadForm({
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-
   return (
     <>
       <Card className="w-full">
@@ -72,18 +70,21 @@ export default function UploadForm({
         </CardHeader>
         <CardContent>
           <p>
-            Bitte Laden Sie einen WILLI-Stundenplan (Dateiendung .BAL) hoch,
-            der für die Planung verwendet werden soll.
+            Bitte Laden Sie einen WILLI-Stundenplan (Dateiendung .BAL) hoch, der
+            für die Planung verwendet werden soll.
           </p>
           <Separator className="my-4" />
-          <button className="gap-8 p-0 m-0 w-full border-0 flex items-center focus-visible:outline-none group"
-                  onClickCapture={(e) => {
-            e.stopPropagation();
-            if (!confirm) setShowConfirm(true);
-            else
-              inputRef.current?.click();
-          }}>
-            <Label htmlFor="file" className="shrink-0">WILLI2-Datei</Label>
+          <button
+            className="gap-8 p-0 m-0 w-full border-0 flex items-center focus-visible:outline-none cursor-pointer group"
+            onClickCapture={(e) => {
+              e.stopPropagation();
+              if (!confirm) setShowConfirm(true);
+              else inputRef.current?.click();
+            }}
+          >
+            <Label htmlFor="file" className="shrink-0">
+              WILLI2-Datei
+            </Label>
             <div className="border-0 p-0 m-0 w-full">
               <Input
                 type="file"
@@ -115,21 +116,28 @@ export default function UploadForm({
       <AlertDialog open={showConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Wirklich ändern?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Wirklich ändern?</AlertDialogTitle>
             <AlertDialogDescription>
-              Wenn sie einen anderen Stundenplan öffnen, werden Ihre Auswahlen zurückgesetzt.
+              Wenn sie einen anderen Stundenplan öffnen, werden Ihre Auswahlen
+              zurückgesetzt.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setShowConfirm(false);
-            }}>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              setTimeout(() => setShowConfirm(false), 0);
-              inputRef.current?.click();
-            }}>Weiter</AlertDialogAction>
+            <AlertDialogCancel
+              onClick={() => {
+                setShowConfirm(false);
+              }}
+            >
+              Abbrechen
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setTimeout(() => setShowConfirm(false), 0);
+                inputRef.current?.click();
+              }}
+            >
+              Weiter
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

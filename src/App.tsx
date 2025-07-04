@@ -31,7 +31,7 @@ function App() {
                 href="https://github.com/jakesarjeant"
                 className="text-foreground underline decoration-dashed hover:decoration-solid"
               >
-                Jake Sarjeant{" "}
+                Jake Sarjeant
               </a>
             </HoverCardTrigger>
             <HoverCardContent>
@@ -48,7 +48,7 @@ function App() {
                 </div>
               </div>
             </HoverCardContent>
-          </HoverCard>
+          </HoverCard>{" "}
           am{" "}
           <HoverCard>
             <HoverCardTrigger asChild>
