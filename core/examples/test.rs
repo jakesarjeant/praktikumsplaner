@@ -21,7 +21,7 @@ fn main() {
     }
   }
 
-  tracing_subscriber::fmt().with_max_level(LevelFilter::DEBUG).init();
+  tracing_subscriber::fmt().with_max_level(LevelFilter::INFO).init();
 
   let solution = generate(
     &plan,

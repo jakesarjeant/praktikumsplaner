@@ -1,6 +1,5 @@
 import { H1, Muted } from "@/components/typography";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 import {
   HoverCard,
   HoverCardContent,
@@ -16,9 +15,6 @@ import { WilliStundenplan } from "willi";
 
 function App() {
   const [plan, setPlan] = useState<WilliStundenplan | null>(null);
-
-  // TODO: Prompt whether to really change plan ("your selections will be lost!")
-  // TODO: When plan changed, clear subjects (new plan may not have same ones)
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-2xl">

@@ -33,10 +33,10 @@ impl Problem {
     subject_counts: &mut Vec<usize>,
     best: &mut Option<Solution>,
     best_cost: &mut f64,
-    best_used_classes: &mut usize
+    best_used_classes: &mut usize,
   ) {
     // Gewichtung der gleichmäßigen verteilung der fächer. 0 = Verteilung wird ignoriert
-    const BALANCE_WT: f64 = 0.1;
+    const BALANCE_WT: f64 = 3.0;
 
     // Kostenfunktion
     fn cost(
@@ -54,18 +54,15 @@ impl Problem {
         .zip(problem.subject_weights.iter())
         .map(|(&count, weight)| {
           let target = problem.time_slots as f64 * weight;
-          let diff = count as f64 - target;
-          if diff >= 0.0 {
-            diff
-          } else {
-            (diff + ((problem.time_slots - slot) as f64 - 1.0).max(0.0)).min(0.0)
-          }
-          .abs()
+          (count as f64 - target).abs() / target
         })
         .sum::<f64>();
 
       let cost = num_classes + (BALANCE_WT * imbalance);
-      trace!("Current branch cost: {cost}");
+      debug!(
+        "Current branch cost: {cost} = {num_classes} + {} = {num_classes} + ({BALANCE_WT} * {imbalance})",
+        BALANCE_WT * imbalance
+      );
 
       cost
     }
@@ -75,12 +72,13 @@ impl Problem {
       // Falls die Lösung eine Verbesserung darstellt: Speichern der neuen Lösung
       let current_cost = cost(self, slot, used_classes, subject_counts);
       info!(
-        "Comparing current cost {current_cost} to best {best_cost}: {} incoming",
+        "Comparing current cost {current_cost} to best {best_cost}: {} incoming\t(bal {:?})",
         if current_cost < *best_cost {
           "accepted"
         } else {
           "rejected"
-        }
+        },
+        subject_counts
       );
       // TODO: Currently, this check will **always** pass, since any other branch would already be
       // pruned. It is purely a safety against future changes of the pruning heuristic.
@@ -89,6 +87,7 @@ impl Problem {
           assignments: current.clone(),
         });
         *best_cost = current_cost;
+        *best_used_classes = used_classes.len()
       }
       // Rekursionsabbruch
       return;
@@ -112,9 +111,12 @@ impl Problem {
         subject_counts[*subject] += 1;
 
         // Nur weiter suchen, wenn diese Lösung nicht schon schlechter ist als die Letzte
-        // if used_classes.len() < best_cost.ceil() as usize {
+        // if used_classes.len()  < *best_used_classes {
+        if used_classes.len() < *best_used_classes
+          || cost(self, slot, used_classes, subject_counts) < *best_cost
+        {
           // Pruning heuristic
-        if cost(self, slot, used_classes, subject_counts) < *best_cost {
+          // if cost(self, slot, used_classes, subject_counts) < *best_cost {
           // Weiter bei der nächsten Stunde
           self.search(
             slot + 1,
@@ -123,6 +125,7 @@ impl Problem {
             subject_counts,
             best,
             best_cost,
+            best_used_classes,
           );
         } else {
           debug!("Branch pruned (at slot {slot})");
@@ -149,6 +152,7 @@ impl Problem {
         subject_counts,
         best,
         best_cost,
+        best_used_classes,
       );
     }
   }
@@ -259,6 +263,7 @@ pub fn generate(
       &mut subject_counts,
       &mut best_solution,
       &mut cost,
+      &mut usize::MAX.clone(),
     );
     best_solution
     // TODO: Proper error handling
