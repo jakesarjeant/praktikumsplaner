@@ -25,3 +25,4 @@ crate-type = ["cdylib", "lib"]
 
 [dev-dependencies]
 comfy-table = "7.1.4"
+tracing-subscriber = "0.3.19"

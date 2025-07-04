@@ -1,8 +1,10 @@
 use ndarray::Array2;
+use tracing::{debug, info, trace};
 use wasm_bindgen::prelude::*;
 use willi::WilliStundenplan;
 
 #[wasm_bindgen]
+#[derive(Debug)]
 pub struct Problem {
   time_slots: usize,
   classes: usize,
@@ -31,6 +33,7 @@ impl Problem {
     subject_counts: &mut Vec<usize>,
     best: &mut Option<Solution>,
     best_cost: &mut f64,
+    best_used_classes: &mut usize
   ) {
     // Gewichtung der gleichmäßigen verteilung der fächer. 0 = Verteilung wird ignoriert
     const BALANCE_WT: f64 = 0.1;
@@ -38,6 +41,7 @@ impl Problem {
     // Kostenfunktion
     fn cost(
       problem: &Problem,
+      slot: usize,
       used_classes: &mut Vec<usize>,
       subject_counts: &mut Vec<usize>,
     ) -> f64 {
@@ -49,18 +53,37 @@ impl Problem {
         .iter()
         .zip(problem.subject_weights.iter())
         .map(|(&count, weight)| {
-          let ideal = problem.time_slots as f64 * weight;
-          (count as f64 - ideal).abs() / ideal
+          let target = problem.time_slots as f64 * weight;
+          let diff = count as f64 - target;
+          if diff >= 0.0 {
+            diff
+          } else {
+            (diff + ((problem.time_slots - slot) as f64 - 1.0).max(0.0)).min(0.0)
+          }
+          .abs()
         })
         .sum::<f64>();
 
-      num_classes + (BALANCE_WT * imbalance)
+      let cost = num_classes + (BALANCE_WT * imbalance);
+      trace!("Current branch cost: {cost}");
+
+      cost
     }
 
     // Abbruchbedingung: letzte Stunde erreicht.
     if slot == self.time_slots {
       // Falls die Lösung eine Verbesserung darstellt: Speichern der neuen Lösung
-      let current_cost = cost(self, used_classes, subject_counts);
+      let current_cost = cost(self, slot, used_classes, subject_counts);
+      info!(
+        "Comparing current cost {current_cost} to best {best_cost}: {} incoming",
+        if current_cost < *best_cost {
+          "accepted"
+        } else {
+          "rejected"
+        }
+      );
+      // TODO: Currently, this check will **always** pass, since any other branch would already be
+      // pruned. It is purely a safety against future changes of the pruning heuristic.
       if current_cost < *best_cost {
         *best = Some(Solution {
           assignments: current.clone(),
@@ -89,7 +112,9 @@ impl Problem {
         subject_counts[*subject] += 1;
 
         // Nur weiter suchen, wenn diese Lösung nicht schon schlechter ist als die Letzte
-        if cost(self, used_classes, subject_counts) < *best_cost {
+        // if used_classes.len() < best_cost.ceil() as usize {
+          // Pruning heuristic
+        if cost(self, slot, used_classes, subject_counts) < *best_cost {
           // Weiter bei der nächsten Stunde
           self.search(
             slot + 1,
@@ -98,7 +123,9 @@ impl Problem {
             subject_counts,
             best,
             best_cost,
-          )
+          );
+        } else {
+          debug!("Branch pruned (at slot {slot})");
         }
 
         // Backtracking: eintrag rückgänging machen
@@ -238,7 +265,7 @@ pub fn generate(
   }
   .expect("Keine gültige Lösung gefunden");
 
-  println!("best cost: {cost}");
+  info!("Cost of best solution: {cost}");
 
   let mut result: Vec<Vec<Option<String>>> = vec![];
   // Pre-fill seven weekdays
