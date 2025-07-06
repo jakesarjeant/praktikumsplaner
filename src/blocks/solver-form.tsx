@@ -432,7 +432,7 @@ function SolveActions({
 
   return (
     <CardFooter className="flex justify-end gap-4 relative pb-6">
-      <Muted>
+      <Muted className="font-mono">
         {!selectedSubjects.length && "Mindestens ein Fach auswählen"}
         {/* {!selectedSubjects.length && !studentName && " und "} */}
         {/* {!studentName && "Namen eingeben"} */}
