@@ -7,11 +7,13 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { download } from "@/lib/utils";
 
 import { type Solution } from "./solver-form";
 
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useRef } from "react";
 import { type WilliStundenplan } from "willi";
+import * as XLSX from "xlsx";
 
 export default function SolutionDialog({
   solution,
@@ -42,7 +44,23 @@ export default function SolutionDialog({
     );
   }, [solution, plan]);
 
-  const downloadSheet = useCallback(() => {}, [transpose]);
+  const tableRef = useRef<HTMLTableElement | null>(null);
+
+  const downloadSheet = useCallback(() => {
+    if (!tableRef.current) return;
+
+    const sheet = XLSX.utils.table_to_book(tableRef.current, {
+      raw: true,
+    });
+
+    const xlsx_data = XLSX.writeXLSX(sheet, {
+      type: "array",
+    });
+
+    const file = new File([xlsx_data], "stundenplan.xlsx");
+
+    download(file);
+  }, [transpose]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -51,12 +69,12 @@ export default function SolutionDialog({
           <DialogTitle>Stundenplan Herunterladen</DialogTitle>
           <DialogDescription>
             Hier sehen sie eine Vorschau Ihres Stundenplans. Sie können diesen
-            nun als CSV-Datei herunterladen, um ihn weiter zu bearbeiten oder zu
-            drucken.
+            nun als Excel-Datei (.xlsx) herunterladen, um ihn weiter zu
+            bearbeiten oder zu drucken.
           </DialogDescription>
         </DialogHeader>
         <div className="border rounded-lg max-w-full overflow-auto">
-          <table className="w-full border-0 border-collapse">
+          <table className="w-full border-0 border-collapse" ref={tableRef}>
             <thead>
               <tr>
                 <th className="border-b" />
@@ -92,6 +110,7 @@ export default function SolutionDialog({
                         <td key={i * 2} className="border p-2 border-r-0">
                           <div className="flex flex-col">
                             <span>{cell?.raum}</span>
+                            <br />
                             <span>{cell?.fach}</span>
                           </div>
                         </td>
@@ -101,6 +120,7 @@ export default function SolutionDialog({
                         >
                           <div className="flex flex-col">
                             <span>{cell?.klasse}</span>
+                            <br />
                             <span>{cell?.lehrkraft}</span>
                           </div>
                         </td>
@@ -114,11 +134,11 @@ export default function SolutionDialog({
         <DialogFooter>
           <Button
             onClick={() => {
-              downloadCsv();
+              downloadSheet();
               setOpen(false);
             }}
           >
-            Als .csv herunterladen
+            Als .xlsx herunterladen
           </Button>
         </DialogFooter>
       </DialogContent>
