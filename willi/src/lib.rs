@@ -2,8 +2,8 @@ use std::{collections::HashMap, io::Cursor, str::FromStr};
 
 use csv::{Position, ReaderBuilder, StringRecord};
 use js_sys::{Object, Reflect};
-use serde::Deserialize;
-use serde_repr::Deserialize_repr;
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use thiserror::Error;
 use tracing::{debug, error, warn};
 use wasm_bindgen::prelude::*;
@@ -21,7 +21,7 @@ pub enum ParseError {
 }
 
 #[wasm_bindgen]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WilliStundenplan {
   /// Kopfzeile mit WILLI-Version, sofern eine gültige Kopfzeile vorgefunden wurde.
   header: Option<WilliHeader>,
@@ -38,7 +38,7 @@ pub struct WilliStundenplan {
   /// Tage
   tage: SparseVec<TagZeile>,
   /// Stunden
-  stunden: SparseVec<StundenZeile>
+  stunden: SparseVec<StundenZeile>,
 }
 
 impl WilliStundenplan {
@@ -63,7 +63,7 @@ impl WilliStundenplan {
       klassen: Default::default(),
       stunden_lehrerplan: vec![],
       tage: Default::default(),
-      stunden: Default::default()
+      stunden: Default::default(),
     };
 
     let mut csv_reader = ReaderBuilder::new()
@@ -197,6 +197,15 @@ impl WilliStundenplan {
   pub fn stunden_lehrerplan(&self) -> Vec<LehrerStundenZeile> {
     self.stunden_lehrerplan.clone()
   }
+
+  pub fn to_js(&self) -> JsValue {
+    serde_wasm_bindgen::to_value(self).unwrap()
+  }
+
+  pub fn from_js(value: JsValue) -> Self {
+    // TODO: Error handling?
+    serde_wasm_bindgen::from_value(value).unwrap()
+  }
 }
 
 #[derive(Clone, Debug)]
@@ -237,7 +246,7 @@ pub fn wasm_parse_plan(source: String) -> ParseResult {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WilliHeader {
   pub version: usize,
 }
@@ -265,7 +274,7 @@ impl FromStr for WilliHeader {
 //// WILLI TABLES ////
 
 // W-Zeile
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SchuldatenZeile {
   #[allow(dead_code)]
   id: String,
@@ -282,7 +291,7 @@ pub struct SchuldatenZeile {
 // TODO: WI
 
 // T-Zeile
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[wasm_bindgen]
 pub struct TagZeile {
   #[allow(dead_code)]
@@ -303,7 +312,7 @@ pub struct TagZeile {
   pub stundenzeiten: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[wasm_bindgen]
 pub struct StundenZeile {
   #[allow(dead_code)]
@@ -335,7 +344,7 @@ pub struct StundenZeile {
 // TODO: Gnn
 
 // F-Zeile
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[wasm_bindgen]
 pub struct FachZeile {
   #[allow(dead_code)]
@@ -385,7 +394,7 @@ pub struct FachZeile {
   pub km_fach: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
 #[wasm_bindgen]
 pub enum FachEigenschaft {
   /// Doppelstündiges Fach
@@ -394,7 +403,7 @@ pub enum FachEigenschaft {
   I,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize_repr, Default)]
+#[derive(Debug, Clone, Copy, Serialize_repr, Deserialize_repr, Default)]
 #[repr(u8)]
 #[wasm_bindgen]
 pub enum Konzentration {
@@ -405,7 +414,7 @@ pub enum Konzentration {
   Hoch = 3,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
 #[wasm_bindgen]
 pub enum Wertung {
   /// Wissenschaftlich
@@ -420,7 +429,7 @@ pub enum Wertung {
 
 // TODO: Knn
 // K-Zeile
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[wasm_bindgen]
 pub struct KlassenZeile {
   #[allow(dead_code)]
@@ -484,7 +493,7 @@ pub struct KlassenZeile {
 // TODO: Jnn
 
 // U-Zeile
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[wasm_bindgen]
 pub struct UnterrichtsZeile {
   #[allow(dead_code)]
@@ -583,7 +592,7 @@ pub struct UnterrichtsZeile {
 // TODO: VSnn
 
 // PL-Zeile
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[wasm_bindgen]
 pub struct LehrerStundenZeile {
   #[allow(dead_code)]
@@ -604,7 +613,7 @@ pub struct LehrerStundenZeile {
   pub fixierung: Option<String>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 #[wasm_bindgen]
 pub struct TagStunde {
   #[wasm_bindgen(getter_with_clone)]
@@ -641,7 +650,7 @@ impl<'de> Deserialize<'de> for TagStunde {
 
 // TODO: Option<Box<T>> to curb memory usage?
 // TODO: Custom debug impl that collapses holes into e.g. <4 empty>
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SparseVec<T>(Vec<Option<T>>);
 
 impl<T> Default for SparseVec<T> {
@@ -679,17 +688,4 @@ impl<T> SparseVec<T> {
       .enumerate()
       .filter_map(|(id, x)| x.as_ref().map(|x| (id, x)))
   }
-}
-
-//// INITIALIZATION ////
-#[wasm_bindgen(start)]
-pub fn start() -> Result<(), JsValue> {
-  // print pretty errors in wasm https://github.com/rustwasm/console_error_panic_hook
-  // This is not needed for tracing_wasm to work, but it is a common tool for getting proper error line numbers for panics.
-  console_error_panic_hook::set_once();
-
-  // Add this line:
-  wasm_tracing::set_as_global_default();
-
-  Ok(())
 }

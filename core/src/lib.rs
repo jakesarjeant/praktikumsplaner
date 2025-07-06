@@ -1,7 +1,14 @@
+use std::cell::LazyCell;
+
 use ndarray::Array2;
-use tracing::{debug, info, trace};
+use serde::Serialize;
+use tracing::{debug, info, trace, warn};
 use wasm_bindgen::prelude::*;
+use wasm_tracing::WasmLayerConfig;
 use willi::WilliStundenplan;
+
+const GLOBAL: LazyCell<web_sys::DedicatedWorkerGlobalScope> =
+  LazyCell::new(|| js_sys::global().unchecked_into());
 
 #[wasm_bindgen]
 #[derive(Debug)]
@@ -11,13 +18,27 @@ pub struct Problem {
   // [subject] = weight
   /// Weights must add up to 1
   subject_weights: Vec<f64>,
-  // [class][slot] = Option<subject>
-  schedule: Array2<Option<usize>>,
+  // [class][slot] = Option<(subject, pl_index)>
+  schedule: Array2<Option<(usize, usize)>>,
 }
 
 pub struct Solution {
-  // [slot] = Option<subject>
+  // [slot] = Option<pl_index>
   assignments: Vec<Option<usize>>,
+}
+
+#[derive(Serialize)]
+struct Progress {
+  best: f64,
+  current_cost: f64,
+  current_classes: usize,
+  visited: usize,
+}
+
+#[derive(Serialize)]
+struct ProgressMessage {
+  r#type: String,
+  progress: Progress,
 }
 
 impl Problem {
@@ -34,6 +55,7 @@ impl Problem {
     best: &mut Option<Solution>,
     best_cost: &mut f64,
     best_used_classes: &mut usize,
+    nodes_visited: &mut usize,
   ) {
     // Gewichtung der gleichmäßigen verteilung der fächer. 0 = Verteilung wird ignoriert
     const BALANCE_WT: f64 = 3.0;
@@ -95,11 +117,12 @@ impl Problem {
 
     let mut assigned = false;
 
+    let mut branches = 0.0;
     for class in 0..self.classes {
       // Falls diese Klasse zu dieser Zeit in einem Fach des Praktikanten unterrichtet wird
-      if let Some(subject) = &self.schedule[[class, slot]] {
+      if let Some((subject, pl_index)) = &self.schedule[[class, slot]] {
         // Klasse für diese Stunde eintragen
-        current[slot] = Some(class);
+        current[slot] = Some(*pl_index);
         let was_new = if used_classes.contains(&class) {
           false
         } else {
@@ -110,14 +133,32 @@ impl Problem {
         // Verteilungen aktualisieren
         subject_counts[*subject] += 1;
 
+        // Fortschritt Zurückmelden
+        let current_cost = cost(self, slot, used_classes, subject_counts);
+        let current_classes = used_classes.len();
+        // Rate-limit progresse messages
+        if *nodes_visited % 3197 == 0 {
+          GLOBAL.post_message(
+            &serde_wasm_bindgen::to_value(&ProgressMessage {
+              r#type: "progress".to_string(),
+              progress: Progress {
+                best: *best_cost,
+                current_cost,
+                current_classes,
+                visited: *nodes_visited,
+              },
+            })
+            .unwrap(),
+          );
+        }
+
         // Nur weiter suchen, wenn diese Lösung nicht schon schlechter ist als die Letzte
         // if used_classes.len()  < *best_used_classes {
-        if used_classes.len() < *best_used_classes
-          || cost(self, slot, used_classes, subject_counts) < *best_cost
-        {
+        if current_classes < *best_used_classes || current_cost < *best_cost {
           // Pruning heuristic
           // if cost(self, slot, used_classes, subject_counts) < *best_cost {
           // Weiter bei der nächsten Stunde
+          branches += 1.0;
           self.search(
             slot + 1,
             current,
@@ -126,6 +167,7 @@ impl Problem {
             best,
             best_cost,
             best_used_classes,
+            nodes_visited,
           );
         } else {
           debug!("Branch pruned (at slot {slot})");
@@ -153,8 +195,11 @@ impl Problem {
         best,
         best_cost,
         best_used_classes,
+        nodes_visited,
       );
     }
+
+    *nodes_visited += 1;
   }
 }
 
@@ -168,8 +213,18 @@ pub struct FachGewichtung {
 
 #[wasm_bindgen(unchecked_return_type = "(string | null)[][]")]
 /// Siehe [`generate`].
-pub fn wasm_generate(plan: &WilliStundenplan, subjects: Vec<FachGewichtung>) -> JsValue {
-  let solution = generate(plan, &subjects);
+pub fn wasm_generate(raw_plan: String, subjects: Vec<String>, weights: Vec<f64>) -> JsValue {
+  info!("Parsing!");
+  let (plan, _errors) = WilliStundenplan::parse(&raw_plan);
+
+  let subject_weights = subjects
+    .iter()
+    .cloned()
+    .zip(weights.iter().copied().chain(std::iter::repeat(1.0)))
+    .map(|(kuerzel, gewicht)| FachGewichtung { kuerzel, gewicht })
+    .collect();
+
+  let solution = generate(&plan, &subject_weights);
   serde_wasm_bindgen::to_value(&solution).unwrap()
 }
 
@@ -180,10 +235,15 @@ pub fn wasm_generate(plan: &WilliStundenplan, subjects: Vec<FachGewichtung>) -> 
 /// * `plan` — ein WILLI2-Stundenplan
 /// * `subjects` — eine Liste von Fächerkürzeln im Plan, gepaart mit gewichtungen. Kein Fach darf
 /// zweimal vorkommen.
+///
+/// # Rückgabe
+/// Eine zwei-dimensionale Liste der Form `[tag][stunde] = [index]`. `index` indiziert die Tabelle
+/// "Stunden im Lehrerplan" (PL) des übergebenen Plans. Theoretisch wäre eine einfache Liste von
+/// Indizes ausreichend, so wird aber der Aufwand sie wieder in eine Tabelle umzubauen gespart.
 pub fn generate(
   plan: &WilliStundenplan,
   subjects: &Vec<FachGewichtung>,
-) -> Vec<Vec<Option<String>>> {
+) -> Vec<Vec<Option<usize>>> {
   // NOTE: This assumes each subject only appears once.
   let classes: Vec<_> = plan.klassen().iter().collect();
   let days: Vec<_> = plan.tage().iter().collect();
@@ -208,7 +268,7 @@ pub fn generate(
 
   let mut filtered_schedule = Array2::default((classes.len(), timeslots.len()));
 
-  for line in plan.lehrerstunden() {
+  for (pl_index, line) in plan.lehrerstunden().iter().enumerate() {
     let Some(subject_idx) = subjects.iter().position(|s| s.kuerzel == line.fach) else {
       // Skip line if subject is not relevant to query
       continue;
@@ -234,7 +294,7 @@ pub fn generate(
       .position(|(_id, c)| c.kuerzel == line.klasse)
       .expect("Eintrag für nicht im Plan vorhandene Klasse");
 
-    filtered_schedule[[class_idx, slot]] = Some(subject_idx)
+    filtered_schedule[[class_idx, slot]] = Some((subject_idx, pl_index));
   }
 
   let weight_sum: f64 = subjects.iter().map(|s| s.gewicht).sum();
@@ -253,6 +313,7 @@ pub fn generate(
   let mut current = (0..problem.time_slots).map(|_| None).collect();
 
   let mut cost = f64::INFINITY.clone();
+  let mut best_used_classes = usize::MAX.clone();
 
   let solution = {
     let mut best_solution = None;
@@ -263,26 +324,28 @@ pub fn generate(
       &mut subject_counts,
       &mut best_solution,
       &mut cost,
-      &mut usize::MAX.clone(),
+      &mut best_used_classes,
+      &mut 0,
     );
     best_solution
     // TODO: Proper error handling
   }
   .expect("Keine gültige Lösung gefunden");
 
-  info!("Cost of best solution: {cost}");
+  info!(
+    "Cost of best solution: {cost} ({} classes)",
+    best_used_classes
+  );
 
-  let mut result: Vec<Vec<Option<String>>> = vec![];
+  let mut result: Vec<Vec<Option<usize>>> = vec![];
   // Pre-fill seven weekdays
   (0..7).for_each(|_| result.push(vec![]));
 
   // Yes, I know this objectively sucks. Fix it if you have the time; I know I don't.
   for (i, assignment) in solution.assignments.iter().enumerate() {
-    let Some(class_id) = assignment else {
+    let Some(pl_idx) = assignment else {
       continue;
     };
-
-    let class_name = classes[*class_id].1.kuerzel.clone();
 
     let (_day, period, day_id) = timeslots[i];
 
@@ -291,8 +354,32 @@ pub fn generate(
       result[day_id - 1].push(None);
     }
 
-    result[day_id - 1][period] = Some(class_name);
+    result[day_id - 1][period] = Some(*pl_idx);
   }
 
   result
+}
+
+// #[wasm_bindgen(start)]
+// fn start() {
+//   tracing_subscriber::fmt()
+//     .with_writer(tracing_subscriber_wasm::MakeConsoleWriter::default())
+//     .without_time()
+//     .init();
+// }
+
+//// INITIALIZATION ////
+#[wasm_bindgen(start)]
+pub fn start() -> Result<(), JsValue> {
+  // print pretty errors in wasm https://github.com/rustwasm/console_error_panic_hook
+  // This is not needed for tracing_wasm to work, but it is a common tool for getting proper error line numbers for panics.
+  console_error_panic_hook::set_once();
+
+  let mut config = WasmLayerConfig::default();
+  config.set_max_level(tracing::metadata::Level::INFO);
+
+  // Add this line:
+  wasm_tracing::set_as_global_default_with_config(config).ok();
+
+  Ok(())
 }

@@ -20,19 +20,22 @@ import {
   ComboItem,
 } from "@/components/combo-input";
 
+import { useSolverWorker, useProgress } from "../hooks/useSolverWorker";
+
 import { WilliStundenplan, FachZeile } from "willi";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, X } from "lucide-react";
+import { GripVertical, X, Loader } from "lucide-react";
+import { useCallback } from "react";
 
-// TODO: Accept the whole WilliStundenplan|null instead
-export default function StudentForm({
+export default function SolverForm({
   plan,
+  planString,
+  setSolution,
 }: {
   plan: WilliStundenplan | null;
+  planString: string | null;
+  setSolution: (solution: Solution | null) => void;
 }) {
-  // TODO: Move all this stuff into a ComboInput component
-  // ---
-
   const [selectedSubjects, setSelectedSubjects] = useState<
     (FachZeile & { id: string })[]
   >([]);
@@ -56,8 +59,23 @@ export default function StudentForm({
     setSelectedSubjects([]);
   }, [plan]);
 
+  const onSolution = useCallback(
+    (assignments: (number | null)[][]) => {
+      const solution = {
+        name: studentName,
+        assignments,
+      };
+
+      setSolution(solution);
+      console.log("got solution:", solution);
+    },
+    [setSolution],
+  );
+
+  const { worker, start, working } = useSolverWorker(onSolution);
+
   return (
-    <Card className="w-full">
+    <Card className="w-full pb-0 overflow-hidden">
       <CardHeader>
         <CardTitle>Parameter Festlegen</CardTitle>
         <CardDescription>
@@ -65,17 +83,17 @@ export default function StudentForm({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Label className="gap-8 align-center">
-          <span className="shrink-0">Vollständiger Name</span>
-          <Input
+        {/* <Label className="gap-8 align-center">
+            <span className="shrink-0">Vollständiger Name</span>
+            <Input
             type="text"
             id="student-name"
             placeholder="Max Mustermann"
             value={studentName}
             onChange={(e) => setStudentName(e.target.value)}
-          />
-        </Label>
-        <Separator className="my-4" />
+            />
+            </Label>
+            <Separator className="my-4" /> */}
         <div
           data-disabled={!plan}
           className="data-[disabled=true]:opacity-50 data-[disabled=true]:pointer-events-none \
@@ -175,17 +193,67 @@ export default function StudentForm({
           />
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end gap-4">
-        <Muted>
-          {!selectedSubjects.length && "Mindestens ein Fach auswählen"}
-          {!selectedSubjects.length && !studentName && " und "}
-          {!studentName && "Namen eingeben"}
-          {(!studentName || !selectedSubjects.length) && "."}
-        </Muted>
-        <Button disabled={!selectedSubjects.length || !studentName}>
-          Plan Erstellen
-        </Button>
-      </CardFooter>
+      <SolveActions
+        selectedSubjects={selectedSubjects}
+        studentName={studentName}
+        plan={planString}
+        solveCallback={start}
+        worker={worker}
+        working={working}
+      />
     </Card>
+  );
+}
+
+export interface Solution {
+  name: string;
+  assignments: (number | null)[][];
+}
+
+// HACK: Yay prop-drilling!
+function SolveActions({
+  selectedSubjects,
+  /* studentName, */
+  plan,
+  solveCallback,
+  worker,
+  working,
+}: {
+  selectedSubjects: (FachZeile & { id: string })[];
+  studentName: string | null;
+  plan: string | null;
+  solveCallback: (plan: string, subjects: string[]) => void;
+  worker: Worker | null;
+  working: boolean;
+}) {
+  const progress = useProgress(worker);
+
+  return (
+    <CardFooter className="flex justify-end gap-4 relative pb-6">
+      <Muted>
+        {!selectedSubjects.length && "Mindestens ein Fach auswählen"}
+        {/* {!selectedSubjects.length && !studentName && " und "} */}
+        {/* {!studentName && "Namen eingeben"} */}
+        {/*!studentName ||*/ !selectedSubjects.length && ". "}
+        {working &&
+          `Wird berechnet... (${progress?.best}@${progress?.visited})`}
+      </Muted>
+      <Button
+        disabled={
+          !selectedSubjects.length /*|| !studentName*/ || !plan || working
+        }
+        onClick={() => {
+          solveCallback(
+            plan!,
+            selectedSubjects.map((s) => s.kuerzel),
+          );
+        }}
+      >
+        {working && (
+          <Loader className="animate-spin [animation-duration:1.5s]" />
+        )}
+        Plan Erstellen
+      </Button>
+    </CardFooter>
   );
 }

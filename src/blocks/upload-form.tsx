@@ -24,8 +24,10 @@ import { WilliStundenplan, WilliParseError, parse_plan } from "willi";
 
 export default function UploadForm({
   setPlan,
+  setRawPlan,
 }: {
   setPlan: React.Dispatch<React.SetStateAction<WilliStundenplan | null>>;
+  setRawPlan: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<WilliParseError[]>([]);
@@ -46,7 +48,9 @@ export default function UploadForm({
     reader.onload = () => {
       const { plan, errors } = parse_plan(reader.result as string);
       setErrors(errors);
+      console.log("parsed:", plan);
       setPlan(plan);
+      setRawPlan(reader.result as string);
 
       if (errors.length) console.error(errors);
     };
@@ -94,6 +98,7 @@ export default function UploadForm({
                 tabIndex={-1}
                 className="flex-[1 0 0] flex pointer-events-none group-focus-visible:border-ring group-focus-visible:ring-ring/50 group-focus-visible:ring-[3px]"
                 onChange={handleFile}
+                accept=".bal,.bak"
               />
             </div>
           </button>

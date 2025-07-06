@@ -1,6 +1,6 @@
-use std::{fs::File, io::Read};
 use comfy_table::Table;
 use planner_core::{generate, FachGewichtung};
+use std::{fs::File, io::Read};
 use tracing::{level_filters::LevelFilter, Level};
 use willi::WilliStundenplan;
 
@@ -21,7 +21,9 @@ fn main() {
     }
   }
 
-  tracing_subscriber::fmt().with_max_level(LevelFilter::INFO).init();
+  tracing_subscriber::fmt()
+    .with_max_level(LevelFilter::INFO)
+    .init();
 
   let solution = generate(
     &plan,
@@ -31,13 +33,13 @@ fn main() {
         gewicht: 1.0,
       },
       FachGewichtung {
-        kuerzel: "Ph".to_string(),
+        kuerzel: "D".to_string(),
         gewicht: 1.0,
-      }
-    ]
+      },
+    ],
   );
 
-  println!("Lösung: {solution:?}");
+  println!("\nLösung: {solution:?}");
 
   // let mut table = Table::new();
 

@@ -7,20 +7,43 @@ import {
 } from "@/components/ui/hover-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-import StudentForm from "./blocks/student-form";
+import SolverForm, { type Solution } from "./blocks/solver-form";
 import UploadForm from "./blocks/upload-form";
+import SolutionDialog from "./blocks/solution-dialog";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { WilliStundenplan } from "willi";
 
 function App() {
+  const [rawPlan, setRawPlan] = useState<string | null>(null);
   const [plan, setPlan] = useState<WilliStundenplan | null>(null);
+
+  const [solution, setSolution] = useState<Solution | null>(null);
+  const [open, setOpen] = useState(false);
+
+  const setSolutionAndOpen = useCallback(
+    (solution: Solution | null) => {
+      setSolution(solution);
+      setOpen(true);
+    },
+    [setSolution, setOpen],
+  );
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-2xl">
       <H1 className="mt-12">Praktikumsplaner</H1>
-      <UploadForm setPlan={setPlan} />
-      <StudentForm plan={plan} />
+      <UploadForm setPlan={setPlan} setRawPlan={setRawPlan} />
+      <SolverForm
+        plan={plan}
+        planString={rawPlan}
+        setSolution={setSolutionAndOpen}
+      />
+      <SolutionDialog
+        solution={solution}
+        open={open}
+        setOpen={setOpen}
+        plan={plan}
+      />
       <div>
         <Separator className="max-w-lg mx-auto mb-4" />
         <Muted className="text-center">
