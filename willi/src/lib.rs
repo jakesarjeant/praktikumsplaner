@@ -2,7 +2,7 @@ use std::{collections::HashMap, io::Cursor, str::FromStr};
 
 use csv::{Position, ReaderBuilder, StringRecord};
 use js_sys::{Object, Reflect};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use thiserror::Error;
 use tracing::{debug, error, warn};
@@ -39,6 +39,8 @@ pub struct WilliStundenplan {
   tage: SparseVec<TagZeile>,
   /// Stunden
   stunden: SparseVec<StundenZeile>,
+  /// Lehrkräfte
+  lehrkraefte: SparseVec<LehrkraftZeile>,
 }
 
 impl WilliStundenplan {
@@ -64,6 +66,7 @@ impl WilliStundenplan {
       stunden_lehrerplan: vec![],
       tage: Default::default(),
       stunden: Default::default(),
+      lehrkraefte: Default::default(),
     };
 
     let mut csv_reader = ReaderBuilder::new()
@@ -136,6 +139,7 @@ impl WilliStundenplan {
         ("K", id) => overwrite_warn!(plan.klassen.insert(id, deserialize!(record))),
         ("T", id) => overwrite_warn!(plan.tage.insert(id, deserialize!(record))),
         ("S", id) => overwrite_warn!(plan.stunden.insert(id, deserialize!(record))),
+        ("L", id) => overwrite_warn!(plan.lehrkraefte.insert(id, deserialize!(record))),
         _ => {}
       }
     }
@@ -192,6 +196,11 @@ impl WilliStundenplan {
   #[wasm_bindgen(getter, unchecked_return_type = "{[id:string]:UnterrichtsZeile}")]
   pub fn unterrichte(&self) -> JsValue {
     to_js_object!(self.unterrichtseinheiten.iter())
+  }
+
+  #[wasm_bindgen(getter, unchecked_return_type = "{[id:string]:LehrkraftZeile}")]
+  pub fn lehrkraefte(&self) -> JsValue {
+    to_js_object!(self.lehrkraefte.iter())
   }
 
   pub fn stunden_lehrerplan(&self) -> Vec<LehrerStundenZeile> {
@@ -333,7 +342,56 @@ pub struct StundenZeile {
 // TODO: Qnn
 // TODO: MP
 // TODO: Enn
-// TODO: Lnn
+
+// L-Zeile
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[wasm_bindgen]
+pub struct LehrkraftZeile {
+  #[allow(dead_code)]
+  id: String,
+  #[wasm_bindgen(getter_with_clone)]
+  pub kuerzel: String,
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub kurz: Option<String>,
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub name: Option<String>,
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub vorname: Option<String>,
+  // TODO: Parse field
+  #[serde(default)]
+  #[wasm_bindgen(getter_with_clone)]
+  pub anrede: Option<String>,
+  // #[serde(default)]
+  // #[serde(
+  //   deserialize_with = "de_german_float",
+  //   serialize_with = "ser_german_float"
+  // )]
+  // pub unterrichtspflichtzeit: Option<f64>,
+  // #[serde(default)]
+  // pub ermaessigungen: Option<f64>,
+  // #[serde(default)]
+  // pub anrechnungen: Option<f64>,
+  // #[serde(default)]
+  // pub effektive_stundenzahl: Option<f64>,
+  // #[serde(default)]
+  // pub arbeitszeitkonto: Option<f64>,
+  // #[serde(default)]
+  // #[wasm_bindgen(getter_with_clone)]
+  // pub deputat: Option<String>,
+  // // TODO: Parse
+  // #[serde(default)]
+  // #[wasm_bindgen(getter_with_clone)]
+  // pub besonderheiten: Option<String>,
+  // // TODO: Parse
+  // #[serde(default)]
+  // #[wasm_bindgen(getter_with_clone)]
+  // pub funktion: Option<String>,
+  // // TODO: Rest of fields
+}
+
 // TODO: LBnn
 // TODO: LCnn
 // TODO: LQnn
@@ -688,4 +746,22 @@ impl<T> SparseVec<T> {
       .enumerate()
       .filter_map(|(id, x)| x.as_ref().map(|x| (id, x)))
   }
+}
+
+pub fn de_german_float<'de, D>(deserializer: D) -> Result<f64, D::Error>
+where
+  D: Deserializer<'de>,
+{
+  let s: &str = Deserialize::deserialize(deserializer)?;
+  let s = s.replace(',', ".");
+  s.parse::<f64>().map_err(serde::de::Error::custom)
+}
+
+pub fn ser_german_float<S>(value: &f64, serializer: S) -> Result<S::Ok, S::Error>
+where
+  S: Serializer,
+{
+  // Format with a period first, then replace with comma
+  let s = format!("{}", value).replace('.', ",");
+  serializer.serialize_str(&s)
 }

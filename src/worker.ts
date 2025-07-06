@@ -2,11 +2,16 @@ import { wasm_generate } from "planner-core";
 
 self.addEventListener("message", (e) => {
   if (e.data.type === "start") {
-    const { plan, subjects } = e.data;
+    const { plan, subjects, excluded_teachers } = e.data;
 
     console.log("starting!", e.data);
 
-    const solution = wasm_generate(plan, subjects, new Float64Array());
+    const solution = wasm_generate(
+      plan,
+      subjects,
+      new Float64Array(),
+      excluded_teachers,
+    );
 
     console.log("done!", solution);
 

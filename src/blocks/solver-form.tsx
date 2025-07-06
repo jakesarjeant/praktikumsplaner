@@ -1,4 +1,14 @@
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -10,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Muted } from "@/components/typography";
 import Sortable from "@/components/sortable";
@@ -19,10 +30,17 @@ import {
   ComboGroup,
   ComboItem,
 } from "@/components/combo-input";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import { Switch } from "@/components/ui/switch";
 
 import { useSolverWorker, useProgress } from "../hooks/useSolverWorker";
 
-import { WilliStundenplan, FachZeile } from "willi";
+import { WilliStundenplan, FachZeile, LehrkraftZeile } from "willi";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, X, Loader } from "lucide-react";
 import { useCallback } from "react";
@@ -55,6 +73,11 @@ export default function SolverForm({
 
   const [studentName, setStudentName] = useState("");
 
+  const [accordionState, setAccordionState] = useState<string[]>([]);
+  const [excludedTeachers, setExcludedTeachers] = useState<
+    (LehrkraftZeile & { id: string })[]
+  >([]);
+
   useEffect(() => {
     setSelectedSubjects([]);
   }, [plan]);
@@ -69,7 +92,7 @@ export default function SolverForm({
       setSolution(solution);
       console.log("got solution:", solution);
     },
-    [setSolution],
+    [setSolution, studentName],
   );
 
   const { worker, start, working } = useSolverWorker(onSolution);
@@ -83,17 +106,17 @@ export default function SolverForm({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {/* <Label className="gap-8 align-center">
-            <span className="shrink-0">Vollständiger Name</span>
-            <Input
+        <Label className="gap-8 align-center">
+          <span className="shrink-0">Vollständiger Name</span>
+          <Input
             type="text"
             id="student-name"
             placeholder="Max Mustermann"
             value={studentName}
             onChange={(e) => setStudentName(e.target.value)}
-            />
-            </Label>
-            <Separator className="my-4" /> */}
+          />
+        </Label>
+        <Separator className="my-4" />
         <div
           data-disabled={!plan}
           className="data-[disabled=true]:opacity-50 data-[disabled=true]:pointer-events-none \
@@ -102,13 +125,13 @@ export default function SolverForm({
           <p className="mb-4">
             Mit der folgenden Suchfunktion können Sie aus den im hochgeladenen
             Stundenplan vorhandenen Fächern auswählen, und sie daraufhin durch
-            Ziehen nach priorität sortieren.
+            Ziehen nach Priorität sortieren.
           </p>
           <Label className="gap-8 align-center">
-            <span className="shrink-0">Fächer Wählen</span>
+            <span className="shrink-0">Fächer wählen</span>
             {/* TODO: ComboInput */}
             <ComboInput
-              placeholder="Fach Suchen (Enter zum Auswählen)"
+              placeholder="Fach suchen (Enter zum Auswählen)"
               disabled={!plan}
             >
               <ComboEmpty>Keine Ergebnisse.</ComboEmpty>
@@ -191,6 +214,20 @@ export default function SolverForm({
               </div>
             )}
           />
+          <Accordion
+            type="multiple"
+            className="w-full mt-4"
+            value={accordionState}
+            onValueChange={setAccordionState}
+          >
+            <TeacherExcludeItem
+              accordionState={accordionState}
+              value={excludedTeachers}
+              onValueChange={setExcludedTeachers}
+              plan={plan}
+            />
+            {/*TODO: Anytime*/}
+          </Accordion>
         </div>
       </CardContent>
       <SolveActions
@@ -200,10 +237,172 @@ export default function SolverForm({
         solveCallback={start}
         worker={worker}
         working={working}
+        excludedTeachers={excludedTeachers.map((t) => t.kuerzel)}
       />
     </Card>
   );
 }
+
+function TeacherExcludeItem({
+  accordionState,
+  value,
+  onValueChange,
+  plan,
+}: {
+  accordionState: string[];
+  value: (LehrkraftZeile & { id: string })[];
+  onValueChange: (value: (LehrkraftZeile & { id: string })[]) => void;
+  plan: WilliStundenplan | null;
+}) {
+  const open = useMemo(
+    () => accordionState.includes("exclude-teachers"),
+    [accordionState],
+  );
+
+  const lehrer = useMemo(() => plan?.lehrkraefte, [plan]);
+  const availableTeachers = useMemo(
+    () =>
+      lehrer &&
+      Object.entries(lehrer)
+        .filter(([id]) => !value.find((l) => l.id == id))
+        .map(([id, f]) => {
+          Object.defineProperty(f, "id", { value: id });
+          return f;
+        }),
+    [lehrer, value],
+  ) as (LehrkraftZeile & { id: string })[];
+
+  const [showClear, setShowClear] = useState(false);
+
+  return (
+    <>
+      <AccordionItem
+        value="exclude-teachers"
+        className="px-6 border rounded-lg last:border-b-1"
+      >
+        <AccordionTrigger
+          className="text-sm text-foreground max-w-full items-center hover:no-underline \
+                                   group"
+        >
+          <div className="flex gap-4 shrink-0 items-center">
+            <Switch
+              checked={open || !!value.length}
+              onClick={() => {
+                if (value.length) setShowClear(true);
+              }}
+            />
+            <span className="group-hover:underline py-0.5">
+              Lehrer ausschließen
+            </span>
+          </div>
+          <div
+            className="flex grow-1 gap-3 items-center overflow-hidden mask-r-from-30% opacity-0 \
+                       data-shown:opacity-100 transition-opacity duration-100"
+            data-shown={!open || null}
+          >
+            {value.map((lehrer, i) => (
+              <Badge variant="secondary" key={i}>
+                {lehrer.kuerzel}
+              </Badge>
+            ))}
+          </div>
+        </AccordionTrigger>
+        <AccordionContent>
+          <p className="mb-4 text-muted-foreground">
+            Geben Sie hier Lehrer an, denen keine Praktikanten zugewiesen werden
+            dürfen.
+          </p>
+          <Label className="gap-8 align-center">
+            <span className="shrink-0">Lehrer wählen</span>
+            {/* TODO: ComboInput */}
+            <ComboInput placeholder="Lehrer suchen" disabled={!plan}>
+              <ComboEmpty>Keine Ergebnisse.</ComboEmpty>
+              {availableTeachers &&
+                availableTeachers.map((s) => (
+                  <ComboItem
+                    key={s.id}
+                    keywords={[s.name || "", s.kuerzel]}
+                    value={s.id}
+                    onSelect={(val) => {
+                      onValueChange([
+                        ...value,
+                        availableTeachers.find((f) => f.id == val) as {
+                          id: string;
+                        } & LehrkraftZeile,
+                      ]);
+                    }}
+                  >
+                    <strong>{s.kuerzel}</strong>
+                    {s.name}
+                  </ComboItem>
+                ))}
+            </ComboInput>
+          </Label>
+          <div className="flex flex-wrap gap-2 items-center">
+            Ausgeschlossene Lehrkräfte:
+            {value.map((lehrer, i) => (
+              <Badge key={i} variant="secondary">
+                {lehrer.kuerzel}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-destructive size-7 hover:bg-transparent"
+                  onClick={() =>
+                    onValueChange(
+                      value.filter((l) => l.kuerzel !== lehrer.kuerzel),
+                    )
+                  }
+                >
+                  <X />
+                </Button>
+              </Badge>
+            ))}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+      <AlertDialog open={showClear}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Wirklich ausschalten?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ihre auswahl an ausgeschlossenen Lehrkräften wird zurückgesetzt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setShowClear(false);
+              }}
+            >
+              Abbrechen
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setTimeout(() => setShowClear(false), 0);
+                onValueChange([]);
+              }}
+            >
+              Weiter
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+/* function TimeoutItem({
+ *   accordionState,
+ *   value,
+ *   onValueChange,
+ * }: {
+ *   accordionState: string[];
+ *   value: number;
+ *   onValueChange: (value: number) => void;
+ * }) {
+ *   const [timeout, setTimeout] = useState(0);
+ *   const [enabled, disabled] = useState(false);
+ * } */
 
 export interface Solution {
   name: string;
@@ -218,15 +417,18 @@ function SolveActions({
   solveCallback,
   worker,
   working,
+  excludedTeachers,
 }: {
   selectedSubjects: (FachZeile & { id: string })[];
   studentName: string | null;
   plan: string | null;
-  solveCallback: (plan: string, subjects: string[]) => void;
+  solveCallback: (plan: string, subjects: string[], e_t: string[]) => void;
   worker: Worker | null;
   working: boolean;
+  excludedTeachers: string[];
 }) {
   const progress = useProgress(worker);
+  console.log("excluding", excludedTeachers);
 
   return (
     <CardFooter className="flex justify-end gap-4 relative pb-6">
@@ -246,13 +448,14 @@ function SolveActions({
           solveCallback(
             plan!,
             selectedSubjects.map((s) => s.kuerzel),
+            excludedTeachers,
           );
         }}
       >
         {working && (
           <Loader className="animate-spin [animation-duration:1.5s]" />
         )}
-        Plan Erstellen
+        Plan erstellen
       </Button>
     </CardFooter>
   );

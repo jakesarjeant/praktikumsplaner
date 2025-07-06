@@ -5,7 +5,11 @@ export function useSolverWorker(
   onSolution: (solution: (number | null)[][]) => void,
 ): {
   worker: Worker | null;
-  start: (plan: string, subjects: string[]) => void;
+  start: (
+    plan: string,
+    subjects: string[],
+    excluded_teachers: string[],
+  ) => void;
   working: boolean;
   // abort: () => void;
 } {
@@ -34,9 +38,14 @@ export function useSolverWorker(
   // TODO: handle error — at the very least, the spinner should stop
 
   const start = useCallback(
-    (plan: string, subjects: string[]) => {
+    (plan: string, subjects: string[], excluded_teachers: string[]) => {
       setWorking(true);
-      workerRef.current?.postMessage({ type: "start", subjects, plan });
+      workerRef.current?.postMessage({
+        type: "start",
+        subjects,
+        plan,
+        excluded_teachers,
+      });
     },
     [workerRef],
   );
@@ -78,7 +87,7 @@ export function useProgress(worker: Worker | null): Progress | null {
         setProgress(null);
       }
     },
-    [setProgress],
+    [setProgress, setLastMsg, lastMsg],
   );
 
   useEffect(() => {

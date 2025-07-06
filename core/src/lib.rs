@@ -213,7 +213,12 @@ pub struct FachGewichtung {
 
 #[wasm_bindgen(unchecked_return_type = "(string | null)[][]")]
 /// Siehe [`generate`].
-pub fn wasm_generate(raw_plan: String, subjects: Vec<String>, weights: Vec<f64>) -> JsValue {
+pub fn wasm_generate(
+  raw_plan: String,
+  subjects: Vec<String>,
+  weights: Vec<f64>,
+  excluded_teachers: Vec<String>,
+) -> JsValue {
   info!("Parsing!");
   let (plan, _errors) = WilliStundenplan::parse(&raw_plan);
 
@@ -224,7 +229,7 @@ pub fn wasm_generate(raw_plan: String, subjects: Vec<String>, weights: Vec<f64>)
     .map(|(kuerzel, gewicht)| FachGewichtung { kuerzel, gewicht })
     .collect();
 
-  let solution = generate(&plan, &subject_weights);
+  let solution = generate(&plan, &subject_weights, &excluded_teachers);
   serde_wasm_bindgen::to_value(&solution).unwrap()
 }
 
@@ -243,6 +248,7 @@ pub fn wasm_generate(raw_plan: String, subjects: Vec<String>, weights: Vec<f64>)
 pub fn generate(
   plan: &WilliStundenplan,
   subjects: &Vec<FachGewichtung>,
+  excluded_teachers: &Vec<String>,
 ) -> Vec<Vec<Option<usize>>> {
   // NOTE: This assumes each subject only appears once.
   let classes: Vec<_> = plan.klassen().iter().collect();
@@ -273,6 +279,10 @@ pub fn generate(
       // Skip line if subject is not relevant to query
       continue;
     };
+
+    if excluded_teachers.contains(&line.lehrkraft) {
+      continue;
+    }
 
     let period_in_day = plan
       .stunden()

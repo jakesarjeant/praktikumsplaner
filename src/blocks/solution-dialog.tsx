@@ -7,6 +7,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 import { download } from "@/lib/utils";
 
 import { type Solution } from "./solver-form";
@@ -14,6 +15,7 @@ import { type Solution } from "./solver-form";
 import { useMemo, useCallback, useRef } from "react";
 import { type WilliStundenplan } from "willi";
 import * as XLSX from "xlsx";
+import { Printer, BadgeInfo } from "lucide-react";
 
 export default function SolutionDialog({
   solution,
@@ -57,22 +59,66 @@ export default function SolutionDialog({
       type: "array",
     });
 
-    const file = new File([xlsx_data], "stundenplan.xlsx");
+    const file = new File(
+      [xlsx_data],
+      `stundenplan-${solution!.name.toLowerCase().replace(" ", "-")}.xlsx`,
+    );
 
     download(file);
   }, [transpose]);
+
+  const print = useCallback(() => {
+    if (!tableRef.current) return;
+
+    const html = tableRef.current.getHTML();
+
+    const printWindow = window.open("", "_blank", "width=800,height=600")!;
+    printWindow.document.write(`
+      <html>
+      <head>
+        <title>Stundenplan ${solution?.name || ""}</title>
+        <style>
+        @page { size: portrait; }
+        body { font-family: sans-serif; padding: 20px; }
+        table, th, td { border: 1px solid #000000; border-collapse: collapse; }
+        table { width: 100%; }
+        th, td { padding: 8px; }
+        .border-r-0 { border-right: 0px; }
+        .border-l-0 { border-left: 0px; }
+        </style>
+      </head>
+      <body>
+        <strong>${solution?.name}</strong>
+        <table>
+          ${html}
+        </table>
+        <script>
+        window.onload = function() {
+          window.focus();
+          window.print();
+          window.close();
+        };
+        </script>
+      </body>
+      </html>
+   `);
+    printWindow.document.close();
+  }, [tableRef]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-6xl sm:w-[80vw] max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>Stundenplan Herunterladen</DialogTitle>
+          <DialogTitle>Stundenplan erstellt</DialogTitle>
           <DialogDescription>
-            Hier sehen sie eine Vorschau Ihres Stundenplans. Sie können diesen
-            nun als Excel-Datei (.xlsx) herunterladen, um ihn weiter zu
-            bearbeiten oder zu drucken.
+            Hier sehen Sie eine Vorschau Ihres Stundenplans. Sie können diesen
+            nun ausdrucken oder als Excel-Datei (.xlsx) herunterladen, um ihn
+            weiter zu bearbeiten.
           </DialogDescription>
         </DialogHeader>
+        <h4>
+          Plan für: <strong>{solution?.name}</strong>
+        </h4>
         <div className="border rounded-lg max-w-full overflow-auto">
           <table className="w-full border-0 border-collapse" ref={tableRef}>
             <thead>
@@ -131,11 +177,22 @@ export default function SolutionDialog({
             </tbody>
           </table>
         </div>
-        <DialogFooter>
+        <Alert>
+          <BadgeInfo />
+          <AlertTitle>
+            Für ein sauberes Erscheinungsbild können Sie im Druckfenster "Kopf-
+            und Fußzeilen drucken" deaktivieren.
+          </AlertTitle>
+        </Alert>
+        <DialogFooter className="flex-row-reverse sm:flex-row-reverse justify-start sm:justify-start">
+          <Button onClick={print}>
+            <Printer />
+            Drucken
+          </Button>
           <Button
+            variant="outline"
             onClick={() => {
               downloadSheet();
-              setOpen(false);
             }}
           >
             Als .xlsx herunterladen
