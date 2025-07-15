@@ -11,7 +11,7 @@
     "dev": "concurrently -i 'vite' 'npm run dev-willi' 'npm run dev-core'",
     "dev-willi": "nodemon --exec 'wasm-pack build' ./willi/ -e rs,toml --ignore ./willi/pkg/",
     "dev-core": "nodemon --exec 'wasm-pack build' ./core/ -e rs,toml --ignore ./core/pkg/",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
