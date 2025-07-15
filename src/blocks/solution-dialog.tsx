@@ -65,7 +65,7 @@ export default function SolutionDialog({
     );
 
     download(file);
-  }, [transpose]);
+  }, [solution]);
 
   const print = useCallback(() => {
     if (!tableRef.current) return;
@@ -103,7 +103,7 @@ export default function SolutionDialog({
       </html>
    `);
     printWindow.document.close();
-  }, [tableRef]);
+  }, [tableRef, solution]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

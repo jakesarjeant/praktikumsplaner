@@ -1,14 +1,26 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ],
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "paths": {
-      "@/*": ["./*"]
-    }
-  },
-  "include": ["src", "components", "hooks", "lib"]
+	"files": [],
+	"references": [
+		{
+			"path": "./tsconfig.app.json"
+		},
+		{
+			"path": "./tsconfig.node.json"
+		}
+	],
+	"compilerOptions": {
+		"noEmit": true,
+		"jsx": "react-jsx",
+		"paths": {
+			"@/*": [
+				"./*"
+			]
+		}
+	},
+	"include": [
+		"src",
+		"components",
+		"hooks",
+		"lib"
+	]
 }
