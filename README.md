@@ -1,54 +1,25 @@
-# React + TypeScript + Vite
+<div align="center">
+  <h3>Praktikumsplaner</h3>
+  <p>
+    <img alt="License" src="https://img.shields.io/badge/license-BSD_3--Clause-red?style=for-the-badge&v=2">
+    <img alt="GitHub tag (latest by date)" src="https://img.shields.io/github/v/tag/jakesarjeant/praktikumsplaner?color=orange&label=%F0%9F%9A%80%20version&style=for-the-badge&v=2">
+    <img alt="GitHub issues" src="https://img.shields.io/github/issues/jakesarjeant/praktikumsplaner?color=green&style=for-the-badge&label=%F0%9F%9A%A8%20issues&v=2">
+  </p>
+  <p>Built with 🫠 by <a href="https://github.com/jakesarjeant">@jakesarjeant</a></p>
+</div>
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+---
 
-Currently, two official plugins are available:
+<p align="center">
+  Programm zur Automatischen planung von Blockpraktika für Lehramtsstundenten
+</p>
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+Diese Software liest Stundenpläne des Stundenplanprogramms [WILLI2](https://willi.wgg-neumarkt.de/) und berechnet daraus optimale (für einige Definitionen von "optimal") Stundenpläne für Lehramtspraktikanten.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+<p align="center">
+  <sup>Copyright © 2025 — Jake Sarjeant. Verfügbar unter der <a href="https://github.com/jakesarjeant/praktikumsplaner/blob/master/LICENSE">BSD 3-Clause-Lizenz</a></sup>
+</p>
