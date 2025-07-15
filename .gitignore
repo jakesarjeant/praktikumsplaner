@@ -5,12 +5,11 @@ tmp/
 
 target/
 
-Willi/
-
 
 # Added by cargo
 
 /target
 
-# NodeJS
+WilliFiles
+dist/
 node_modules/
