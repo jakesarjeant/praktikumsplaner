@@ -11,7 +11,7 @@
 ---
 
 <p align="center">
-  Programm zur Automatischen planung von Blockpraktika für Lehramtsstundenten
+  Mein Abschlussprojekt der Informatik 12. Klasse: Programm zur Automatischen planung von Blockpraktika für Lehramtsstundenten
 </p>
 
 ---
