@@ -508,8 +508,7 @@ function SolveActions({
       <Button
         variant={working ? "destructive" : "default"}
         disabled={
-          false
-          // !selectedSubjects.length /*|| !studentName*/ || !plan || working
+        !selectedSubjects.length /*|| !studentName*/ || !plan
         }
         onClick={() => {
           if (!working)
