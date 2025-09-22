@@ -1,0 +1,56 @@
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v5.0.0
+        with:
+          node-version: 22.16.x
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - uses: actions/cache@v4
+        id: cache-wasm
+        with:
+          path: |
+            ./willi/pkg
+            ./core/pkg
+          key: ${{ hashFiles('./willi/src') }}-${{ hashFiles('./core/src') }}
+      - run: wasm-pack build
+        if: steps.cache-wasm.outputs.cache-hit != 'true'
+        working-directory: ./willi
+      - run: wasm-pack build
+        if: steps.cache-wasm.outputs.cache-hit != 'true'
+        working-directory: ./core
+
+      - run: npm run build
+
+      - id: deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
+  deploy:
+    needs: build
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    # Specify runner + deployment step
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
