@@ -39,6 +39,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 
 import { useSolverWorker, useProgress } from "../hooks/useSolverWorker";
+import { useInterval } from "../hooks/interval";
+import { AnytimeItem } from "./anytime";
 
 import { WilliStundenplan, FachZeile, LehrkraftZeile } from "willi";
 import { CSS } from "@dnd-kit/utilities";
@@ -49,10 +51,12 @@ export default function SolverForm({
   plan,
   planString,
   setSolution,
+  setOpen
 }: {
   plan: WilliStundenplan | null;
   planString: string | null;
   setSolution: (solution: Solution | null) => void;
+  setOpen: (open: boolean) => void;
 }) {
   const [selectedSubjects, setSelectedSubjects] = useState<
     (FachZeile & { id: string })[]
@@ -78,6 +82,9 @@ export default function SolverForm({
     (LehrkraftZeile & { id: string })[]
   >([]);
 
+  const [anytime, setAnytime] = useState(60000);
+  const [anytimeEnabled, setAnytimeEnabled] = useState(true);
+
   useEffect(() => {
     setSelectedSubjects([]);
   }, [plan]);
@@ -90,12 +97,45 @@ export default function SolverForm({
       };
 
       setSolution(solution);
-      console.log("got solution:", solution);
     },
     [setSolution, studentName],
   );
 
-  const { worker, start, working } = useSolverWorker(onSolution);
+  const setSolutionAndOpen = useCallback(
+    (solution: (number | null)[][]) => {
+      onSolution(solution);
+      setProgress(1);
+      setOpen(true);
+    },
+    [onSolution, setOpen]
+  );
+
+  // TODO: Different callback for finalizer?
+  const { worker, start: startWorker, working, abort: abortWorker } = useSolverWorker(onSolution, setSolutionAndOpen);
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [progress, setProgress] = useState(1);
+
+  const start = useCallback((plan: string, subjects: string[], excluded_teachers: string[]) => {
+    setSolution(null);
+    setStartTime(Date.now());
+    setProgress(0);
+    startWorker(plan, subjects, excluded_teachers);
+  }, [setSolution, startWorker]);
+
+  const abort = useCallback(() => {
+    abortWorker();
+    setProgress(1);
+    setOpen(true);
+  }, [abortWorker, setOpen]);
+
+  useInterval(() => {
+    const delta = Date.now() - (startTime || 0);
+
+    setProgress(delta / anytime);
+
+    if (anytimeEnabled && working && delta > anytime)
+      abort();
+  }, working ? 100 : null);
 
   return (
     <Card className="w-full pb-0 overflow-hidden">
@@ -216,7 +256,7 @@ export default function SolverForm({
           />
           <Accordion
             type="multiple"
-            className="w-full mt-4"
+            className="w-full mt-4 gap-4 flex-col flex"
             value={accordionState}
             onValueChange={setAccordionState}
           >
@@ -225,6 +265,17 @@ export default function SolverForm({
               value={excludedTeachers}
               onValueChange={setExcludedTeachers}
               plan={plan}
+            />
+            <AnytimeItem
+              accordionState={accordionState}
+              setAccordionState={setAccordionState}
+              value={anytime}
+              onValueChange={setAnytime}
+              enabled={anytimeEnabled}
+              setEnabled={setAnytimeEnabled}
+              progress={progress}
+              startTime={startTime}
+              working={working}
             />
             {/*TODO: Anytime*/}
           </Accordion>
@@ -235,6 +286,7 @@ export default function SolverForm({
         studentName={studentName}
         plan={planString}
         solveCallback={start}
+        abortCallback={abort}
         worker={worker}
         working={working}
         excludedTeachers={excludedTeachers.map((t) => t.kuerzel)}
@@ -409,12 +461,13 @@ export interface Solution {
   assignments: (number | null)[][];
 }
 
-// HACK: Yay prop-drilling!
+// HACK: Yay prop drilling!
 function SolveActions({
   selectedSubjects,
   /* studentName, */
   plan,
   solveCallback,
+  abortCallback,
   worker,
   working,
   excludedTeachers,
@@ -423,6 +476,7 @@ function SolveActions({
   studentName: string | null;
   plan: string | null;
   solveCallback: (plan: string, subjects: string[], e_t: string[]) => void;
+  abortCallback: () => void;
   worker: Worker | null;
   working: boolean;
   excludedTeachers: string[];
@@ -441,21 +495,26 @@ function SolveActions({
           `Wird berechnet... (${progress?.best}@${progress?.visited})`}
       </Muted>
       <Button
+        variant={working ? "destructive" : "default"}
         disabled={
-          !selectedSubjects.length /*|| !studentName*/ || !plan || working
+        false
+            // !selectedSubjects.length /*|| !studentName*/ || !plan || working
         }
         onClick={() => {
-          solveCallback(
-            plan!,
-            selectedSubjects.map((s) => s.kuerzel),
-            excludedTeachers,
-          );
+          if (!working)
+            solveCallback(
+              plan!,
+              selectedSubjects.map((s) => s.kuerzel),
+              excludedTeachers,
+            );
+          else
+            abortCallback();
         }}
       >
-        {working && (
+        {working ? <>
           <Loader className="animate-spin [animation-duration:1.5s]" />
-        )}
-        Plan erstellen
+          Sofort Anhalten
+        </> : "Plan erstellen"}
       </Button>
     </CardFooter>
   );

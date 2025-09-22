@@ -21,14 +21,6 @@ function App() {
   const [solution, setSolution] = useState<Solution | null>(null);
   const [open, setOpen] = useState(false);
 
-  const setSolutionAndOpen = useCallback(
-    (solution: Solution | null) => {
-      setSolution(solution);
-      setOpen(true);
-    },
-    [setSolution, setOpen],
-  );
-
   return (
     <div className="flex flex-col gap-8 w-full max-w-2xl">
       <H1 className="mt-12">Praktikumsplaner</H1>
@@ -36,7 +28,8 @@ function App() {
       <SolverForm
         plan={plan}
         planString={rawPlan}
-        setSolution={setSolutionAndOpen}
+        setSolution={setSolution}
+        setOpen={setOpen}
       />
       <SolutionDialog
         solution={solution}

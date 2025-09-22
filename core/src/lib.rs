@@ -22,6 +22,7 @@ pub struct Problem {
   schedule: Array2<Option<(usize, usize)>>,
 }
 
+#[derive(Debug)]
 pub struct Solution {
   // [slot] = Option<pl_index>
   assignments: Vec<Option<usize>>,
@@ -41,6 +42,12 @@ struct ProgressMessage {
   progress: Progress,
 }
 
+#[derive(Serialize)]
+struct SolutionMessage {
+  r#type: String,
+  solution: Vec<Vec<Option<usize>>>
+}
+
 impl Problem {
   // Rekursiver Optimierungsalgorithmus
   fn search(
@@ -56,6 +63,8 @@ impl Problem {
     best_cost: &mut f64,
     best_used_classes: &mut usize,
     nodes_visited: &mut usize,
+    // Map used to finalize the intermediate plans
+    timeslots: &Vec<(&str, usize, usize)>,
   ) {
     // Gewichtung der gleichmäßigen verteilung der fächer. 0 = Verteilung wird ignoriert
     const BALANCE_WT: f64 = 3.0;
@@ -152,6 +161,17 @@ impl Problem {
           );
         }
 
+        if *nodes_visited % 1000000 == 0 {
+          if let Some(solution) = best {
+            GLOBAL.post_message(
+              &serde_wasm_bindgen::to_value(&SolutionMessage {
+                r#type: "solution".to_string(),
+                solution: finalize(&solution, timeslots),
+              }).unwrap()
+            );
+          }
+        }
+
         // Nur weiter suchen, wenn diese Lösung nicht schon schlechter ist als die Letzte
         // if used_classes.len()  < *best_used_classes {
         if current_classes < *best_used_classes || current_cost < *best_cost {
@@ -168,6 +188,7 @@ impl Problem {
             best_cost,
             best_used_classes,
             nodes_visited,
+            timeslots
           );
         } else {
           debug!("Branch pruned (at slot {slot})");
@@ -196,6 +217,7 @@ impl Problem {
         best_cost,
         best_used_classes,
         nodes_visited,
+        timeslots
       );
     }
 
@@ -281,7 +303,7 @@ pub fn generate(
     };
 
     if excluded_teachers.contains(&line.lehrkraft) {
-      continue;
+     continue;
     }
 
     let period_in_day = plan
@@ -336,6 +358,7 @@ pub fn generate(
       &mut cost,
       &mut best_used_classes,
       &mut 0,
+      &timeslots
     );
     best_solution
     // TODO: Proper error handling
@@ -347,6 +370,11 @@ pub fn generate(
     best_used_classes
   );
 
+  finalize(&solution, &timeslots)
+}
+
+#[tracing::instrument]
+fn finalize(solution: &Solution, timeslots: &Vec<(&str, usize, usize)>) -> Vec<Vec<Option<usize>>>{
   let mut result: Vec<Vec<Option<usize>>> = vec![];
   // Pre-fill seven weekdays
   (0..7).for_each(|_| result.push(vec![]));

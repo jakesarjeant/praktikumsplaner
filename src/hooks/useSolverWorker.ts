@@ -3,6 +3,7 @@ import MyWorker from "../worker?worker";
 
 export function useSolverWorker(
   onSolution: (solution: (number | null)[][]) => void,
+  onFinal: (solution: (number | null)[][]) => void,
 ): {
   worker: Worker | null;
   start: (
@@ -11,29 +12,37 @@ export function useSolverWorker(
     excluded_teachers: string[],
   ) => void;
   working: boolean;
-  // abort: () => void;
+  abort: () => void;
 } {
   const workerRef = useRef<Worker | null>(null);
   const [working, setWorking] = useState(false);
 
-  useEffect(() => {
+  const startWorker = useCallback(() => {
     const worker = new MyWorker();
 
     worker.addEventListener("message", (e: MessageEvent) => {
       // NOTE: progress updates are handled directly by the progress component to
       // avoid re-running components higher up in the hierarchy
-      if (e.data.type === "result") {
-        setWorking(false);
+      if (e.data.type === "solution") {
         onSolution(e.data.solution);
+      }
+
+      if (e.data.type === "final") {
+        setWorking(false);
+        onFinal(e.data.solution);
       }
     });
 
     workerRef.current = worker;
 
     return () => {
-      worker.terminate();
+      workerRef.current?.terminate();
     };
-  }, [onSolution]);
+  }, [setWorking, onSolution, onFinal]);
+
+  useEffect(() => {
+    startWorker();
+  }, [startWorker]);
 
   // TODO: handle error — at the very least, the spinner should stop
 
@@ -51,11 +60,21 @@ export function useSolverWorker(
   );
 
   // TODO: abort
+  const abort = useCallback(
+    () => {
+      workerRef.current?.terminate();
+      setWorking(false);
+      // TODO: Does this really make that much sense?
+      startWorker();
+    },
+    [workerRef, startWorker]
+  );
 
   return {
     worker: workerRef.current,
     start,
     working,
+    abort
   };
 }
 

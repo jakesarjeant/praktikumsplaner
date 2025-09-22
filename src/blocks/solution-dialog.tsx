@@ -107,7 +107,10 @@ export default function SolutionDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-6xl sm:w-[80vw] max-h-[90vh]">
+      <DialogContent
+        className="sm:max-w-6xl sm:w-[80vw] max-h-[90vh] overflow-auto"
+        onInteractOutside={e => { e.preventDefault(); }}
+      >
         <DialogHeader>
           <DialogTitle>Stundenplan erstellt</DialogTitle>
           <DialogDescription>

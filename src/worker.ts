@@ -16,7 +16,7 @@ self.addEventListener("message", (e) => {
     console.log("done!", solution);
 
     self.postMessage({
-      type: "result",
+      type: "final",
       solution: solution,
     });
   }

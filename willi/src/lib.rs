@@ -16,8 +16,8 @@ pub enum ParseError {
   Aborted,
   #[error("Formatfehler — Zeile ohne Datentyp")]
   MissingType,
-  #[error("Ungültige Datenzeile — {0}")]
-  BadLine(csv::Error),
+  #[error("Ungültige Datenzeile — {0}\n\tZeile: {1:?}")]
+  BadLine(csv::Error, Option<csv::StringRecord>),
 }
 
 #[wasm_bindgen]
@@ -78,7 +78,7 @@ impl WilliStundenplan {
       let record = match result {
         Ok(rec) => rec,
         Err(err) => {
-          errors.push((err.position().cloned(), ParseError::BadLine(err)));
+          errors.push((err.position().cloned(), ParseError::BadLine(err, None)));
           continue;
         }
       };
@@ -113,7 +113,7 @@ impl WilliStundenplan {
             Err(err) => {
               errors.push((
                 err.position().or(record.position()).cloned(),
-                ParseError::BadLine(err),
+                ParseError::BadLine(err, Some($rec)),
               ));
               continue;
             }
@@ -446,7 +446,8 @@ pub struct FachZeile {
   // TODO: Does this use IDs ore kuerzel?
   #[serde(default)]
   #[wasm_bindgen(getter_with_clone)]
-  pub fachkollision: Vec<usize>,
+  // pub fachkollision: Vec<usize>,
+  pub fachkollision: String,
   #[serde(default)]
   #[wasm_bindgen(getter_with_clone)]
   pub km_fach: Option<String>,
@@ -519,9 +520,9 @@ pub struct KlassenZeile {
   pub farbe: Option<String>,
   #[wasm_bindgen(getter_with_clone)]
   pub stammklasse: Option<String>,
-  pub mittagspause_min: usize,
-  pub mittagspause_max: usize,
-  pub nachmittag_max: usize,
+  pub mittagspause_min: Option<usize>,
+  pub mittagspause_max: Option<usize>,
+  pub nachmittag_max: Option<usize>,
   #[wasm_bindgen(getter_with_clone)]
   pub schule: Option<String>,
   /// Anzahl der katholischen Schüler in der Klasse

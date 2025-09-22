@@ -1,12 +1,12 @@
 use comfy_table::Table;
-use planner_core::{generate, FachGewichtung};
+use planner_core::{FachGewichtung, generate};
 use std::{fs::File, io::Read};
-use tracing::{level_filters::LevelFilter, Level};
+use tracing::{Level, level_filters::LevelFilter};
 use willi::WilliStundenplan;
 
 fn main() {
   let mut raw_source = vec![];
-  File::open("../../WilliFiles/Stundenplandateien/AKG2024-25_31.03.BAL")
+  File::open("/Users/jake/Downloads/AKG2025.BAL")
     .unwrap()
     .read_to_end(&mut raw_source)
     .unwrap();

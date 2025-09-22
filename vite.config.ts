@@ -7,6 +7,7 @@ import topLevelAwait from 'vite-plugin-top-level-await';
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "/praktikumsplaner/",
   plugins: [react(), tailwindcss(), wasm(), topLevelAwait()],
   resolve: {
     alias: {
