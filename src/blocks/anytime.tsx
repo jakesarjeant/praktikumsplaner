@@ -71,7 +71,7 @@ export function AnytimeItem({
         >
           <Badge variant={enabled ? ((working && !!startTime) ? "destructive" : "default") : "secondary"}>
             {
-                (working && !!startTime) ? <>
+                (working && !!startTime && enabled) ? <>
                   <Clock />
                   {humanTime(Math.ceil((Date.now() - startTime - value) / -1000))}
                 </> : humanTime(Math.floor(value / 1000))}
@@ -95,7 +95,7 @@ export function AnytimeItem({
       </AccordionContent>
       <div
         className="absolute bottom-0 left-0 h-2 bg-foreground opacity-100 data-[hidden=true]:opacity-0 duration-300"
-        data-hidden={progress == 1}
+        data-hidden={progress == 1 || !enabled}
         style={{ width: `${Math.ceil(10000 * progress) / 100}%` }}
       />
     </AccordionItem>
