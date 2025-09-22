@@ -12,6 +12,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": resolve(__dirname, "./"),
+      "willi": resolve(__dirname, "./willi/pkg"),
+      "planner-core": resolve(__dirname, "./core/pkg"),
     },
   },
   worker: {
