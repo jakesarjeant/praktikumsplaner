@@ -37,6 +37,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { Switch } from "@/components/ui/switch";
+import { computeSubjectCounts } from "@/lib/willi";
 
 import { useSolverWorker, useProgress } from "../hooks/useSolverWorker";
 import { useInterval } from "../hooks/interval";
@@ -44,7 +45,7 @@ import { AnytimeItem } from "./anytime";
 
 import { WilliStundenplan, FachZeile, LehrkraftZeile } from "willi";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, X, Loader } from "lucide-react";
+import { GripVertical, X, Loader, TriangleAlert } from "lucide-react";
 import { useCallback } from "react";
 
 export default function SolverForm({
@@ -63,16 +64,19 @@ export default function SolverForm({
   >([]);
   // Getter is quite expensive because we need to copy the entire table into a hashmap
   const faecher = useMemo(() => plan?.faecher, [plan]);
+  const subjectCounts = useMemo(() => plan && computeSubjectCounts(plan), [plan]);
   const availableSubjects = useMemo(
     () =>
       faecher &&
       Object.entries(faecher)
         .filter(([id]) => !selectedSubjects.find((s) => s.id == id))
+        // Don't show subjects with zero classes:
+        .filter(([, sub]) => !!subjectCounts?.[sub.kuerzel] || !subjectCounts)
         .map(([id, f]) => {
           Object.defineProperty(f, "id", { value: id });
           return f;
         }),
-    [faecher, selectedSubjects],
+    [faecher, selectedSubjects, subjectCounts],
   ) as (FachZeile & { id: string })[];
 
   const [studentName, setStudentName] = useState("");
@@ -137,6 +141,8 @@ export default function SolverForm({
       abort();
   }, working ? 100 : null);
 
+  // TODO: Option to enable afternoon lessons
+
   return (
     <Card className="w-full pb-0 overflow-hidden">
       <CardHeader>
@@ -193,6 +199,11 @@ export default function SolverForm({
                     >
                       <strong>{s.kuerzel}</strong>
                       {s.name}
+                      {(subjectCounts?.[s.kuerzel] || 0) <= 5 &&
+                        <span className="ml-auto inline-flex flex-nowrap gap-2 items-center text-warning">
+                          <TriangleAlert className="text-warning"/>
+                          ≤5 Einträge
+                        </span>}
                     </ComboItem>
                   ))}
               </ComboGroup>
@@ -497,8 +508,8 @@ function SolveActions({
       <Button
         variant={working ? "destructive" : "default"}
         disabled={
-        false
-            // !selectedSubjects.length /*|| !studentName*/ || !plan || working
+          false
+          // !selectedSubjects.length /*|| !studentName*/ || !plan || working
         }
         onClick={() => {
           if (!working)
