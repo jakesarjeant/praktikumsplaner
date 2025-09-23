@@ -114,11 +114,21 @@ impl Problem {
       // TODO: Currently, this check will **always** pass, since any other branch would already be
       // pruned. It is purely a safety against future changes of the pruning heuristic.
       if current_cost < *best_cost {
-        *best = Some(Solution {
+        let solution = Solution {
           assignments: current.clone(),
-        });
+        };
+
+        let _ = GLOBAL.post_message(
+          &serde_wasm_bindgen::to_value(&SolutionMessage {
+            r#type: "solution".to_string(),
+            solution: finalize(&solution, timeslots),
+          }).unwrap()
+        );
+
+        *best = Some(solution);
         *best_cost = current_cost;
-        *best_used_classes = used_classes.len()
+        *best_used_classes = used_classes.len();
+
       }
       // Rekursionsabbruch
       return;
@@ -159,17 +169,6 @@ impl Problem {
             })
             .unwrap(),
           );
-        }
-
-        if *nodes_visited % 1000000 == 0 {
-          if let Some(solution) = best {
-            GLOBAL.post_message(
-              &serde_wasm_bindgen::to_value(&SolutionMessage {
-                r#type: "solution".to_string(),
-                solution: finalize(&solution, timeslots),
-              }).unwrap()
-            );
-          }
         }
 
         // Nur weiter suchen, wenn diese Lösung nicht schon schlechter ist als die Letzte
